@@ -1,0 +1,40 @@
+{
+    "LosAngeles-xjnqis-ip9jtxo": {
+        "ImageUrl": "https://i.redd.it/b7zui0ibi3p91.jpg",
+        "ProxyUrl": "http://localhost:8080/preset:sharp/resize:fit:1024/plain/https://i.redd.it/b7zui0ibi3p91.jpg@jpg",
+        "RedditComments": [
+            {
+                "Comment": "These states shit on us for being a \"failed state\". Im ok with these billboards.",
+                "Author": "El_gato_picante"
+            },
+            {
+                "Comment": "The “failed state” responsible for a big part of the country’s GDP, and almonds haha.",
+                "Author": "altaltredditaccount"
+            },
+            {
+                "Comment": "California is the worlds 5th biggest economy",
+                "Author": "[deleted]"
+            }
+        ],
+        "LinkType": "Image"
+    },
+    "pics-1f2rgq4-lk8rpcx": {
+        "ImageUrl": "https://i.redd.it/b7zui0ibi3p91.jpg",
+        "ProxyUrl": "http://localhost:8080/preset:sharp/resize:fit:700/plain/https://i.redd.it/b7zui0ibi3p91.jpg@jpg",
+        "RedditComments": [
+            {
+                "Comment": "These states shit on us for being a \"failed state\". Im ok with these billboards.",
+                "Author": "El_gato_picante"
+            },
+            {
+                "Comment": "The “failed state” responsible for a big part of the country’s GDP, and almonds haha.",
+                "Author": "altaltredditaccount"
+            },
+            {
+                "Comment": "California is the worlds 5th biggest economy",
+                "Author": "[deleted]"
+            }
+        ],
+        "LinkType": "Image"
+    }
+}

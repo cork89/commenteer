@@ -1,0 +1,136 @@
+body {
+    background-color: rgb(228, 209, 184);
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1em;
+}
+
+.image-comment-container {
+    border: 2px solid rgb(128, 128, 172);
+    border-radius: 5px;
+    max-width: 100%;
+    font-family: 'Arial';
+    font-size: 23px;
+    width: 1024px;
+
+    display: inline-block;
+    background-color: rgb(255, 255, 255);;
+}
+
+img {
+    display: block;
+    margin-bottom: -5px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.comment-container {
+    background-color: rgb(255, 255, 255);
+    max-width: 100%;
+}
+
+@media (max-width: 1220px) {
+    ul {
+        margin-left: -20px;
+    }
+
+    .d0 {
+        width: calc(100% - 5em);
+    }
+
+    .d1 {
+        width: calc(1024px - 7.5em);
+        max-width: calc(100% - 2em);
+    }
+
+    .d2 {
+        width: calc(1024px - 10em);
+        max-width: calc(100% - 2.5em);
+    }
+
+
+    .d0 ul>li.comment::after {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -20px;
+        width: 14px;
+        overflow: hidden;
+        height: 17px;
+        border-left: 2px solid red;
+        border-bottom: 2px solid red;
+        border-radius: 0 0 0 10px;
+    }
+}
+
+@media (min-width: 1221px) {
+    .d0 ul>li.comment::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: -40px;
+        width: 28px;
+        overflow: hidden;
+        height: 30px;
+        border-left: 2px solid red;
+        border-bottom: 2px solid red;
+        border-radius: 0 0 0 10px;
+    }
+}
+
+ul {
+    list-style-type: none;
+}
+
+.d0 {
+    width: calc(1024px - 5em);
+}
+
+.d1 {
+    width: calc(1024px - 7.5em);
+    max-width: calc(100% - 2em);
+}
+
+.d2 {
+    width: calc(1024px - 10em);
+    max-width: calc(100% - 2.5em);
+    padding-bottom: 0em;
+}
+
+ul .author {
+    margin-left: 10px;
+    color: gray;
+    font-size: 14px;
+    padding-bottom: 1em;
+}
+
+ul .comment {
+    color: rgb(0, 0, 0);
+}
+
+ul>li.comment>p {
+    margin: 0px;
+}
+
+ul>li.author::after {
+    margin-bottom: 2px;
+}
+
+ul>li.comment {
+    position: relative;
+    border: 1px solid rgb(224, 224, 224);
+    border-radius: 2px;
+    padding: 5px;
+}
+
+.login {
+    display:inline-block;
+}
+
+.login img {
+    width: 25px;
+}

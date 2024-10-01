@@ -1,0 +1,30 @@
+{{define "head"}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="/static/edit.js"></script>
+{{end}}
+
+{{define "body"}}
+<a href="/"><button>home</button></a>
+<button onclick="takeScreenshot();">screenshot</button>
+<h1>edit</h1>
+<div class="container">
+    <div class="image-comment-container">
+        <div class="image-container">
+            <!--http://localhost:8090/image/-->
+            <img src="{{.ProxyUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
+            <!-- <img src="/static/g5v4dmeakwod1.png" alt="{{.ImageUrl}}" loading="lazy" /> -->
+
+        </div>
+        <div class="comment-container">
+            {{range $i, $comment := .RedditComments}}
+            <ul class="d{{$i}}">
+                <li class="comment">{{$comment.Comment}}</li>
+                <li class="author">u/{{$comment.Author}}</li>
+                {{end}}
+            </ul>
+        </div>
+    </div>
+</div>
+{{end}}

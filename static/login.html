@@ -1,0 +1,8 @@
+{{define "head"}}
+{{end}}
+
+{{define "body"}}
+<a href="/"><button>Home</button></a>
+<p>{{.}}</p>
+<a href="https://www.reddit.com/api/v1/authorize?client_id=S4zkpm8TIAqSndP7_gRwEg&response_type=code&state=RANDOM_STRING&redirect_uri=http://localhost:8090/login/&duration=permanent&scope=read,identity"><button>Continue with Reddit</button></a>
+{{end}}
