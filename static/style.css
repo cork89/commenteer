@@ -1,12 +1,46 @@
+:root {
+    --latte-base: hsl(220deg, 23%, 95%);
+    --latte-crust: hsl(220deg, 21%, 89%);
+    --latte-mantle: hsl(220deg, 22%, 92%);
+    --latte-surface0: hsl(223deg, 16%, 83%);
+    --latte-surface1: hsl(225deg, 14%, 77%);
+    --latte-surface2: hsl(227deg, 12%, 71%);
+    --latte-overlay0: hsl(228deg, 11%, 65%);
+    --latte-overlay1: hsl(231deg, 10%, 59%);
+    --latte-overlay2: hsl(232deg, 10%, 53%);
+    --latte-subtext0: hsl(233deg, 10%, 47%);
+    --latte-subtext1: hsl(233deg, 13%, 41%);
+    --latte-text: hsl(234deg, 16%, 35%);
+    --latte-lavender: hsl(231deg, 97%, 72%);
+    --latte-blue: hsl(220deg, 91%, 54%);
+    --latte-sapphire: hsl(189deg, 70%, 42%);
+    --latte-sky: hsl(197deg, 97%, 46%);
+    --latte-teal: hsl(183deg, 74%, 35%);
+    --latte-green: hsl(109deg, 58%, 40%);
+    --latte-yellow: hsl(35deg, 77%, 49%);
+    --latte-peach: hsl(22deg, 99%, 52%);
+    --latte-maroon: hsl(355deg, 76%, 59%);
+    --latte-red: hsl(347deg, 87%, 44%);
+    --latte-mauve: hsl(266deg, 85%, 58%);
+    --latte-pink: hsl(316deg, 73%, 69%);
+    --latte-flamingo: hsl(0deg, 60%, 67%);
+    --latte-rosewater: hsl(11deg, 59%, 67%);
+}
+
 body {
-    background-color: rgb(228, 209, 184);
+    background-color: var(--latte-base)
+}
+
+.logo {
+    margin: 0.5rem;
 }
 
 .container {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 1em;
+    padding-top: 2rem;
+    margin-bottom: 1rem;
 }
 
 .image-comment-container {
@@ -18,7 +52,7 @@ body {
     width: 1024px;
 
     display: inline-block;
-    background-color: rgb(255, 255, 255);;
+    background-color: rgb(255, 255, 255);
 }
 
 img {
@@ -39,17 +73,17 @@ img {
     }
 
     .d0 {
-        width: calc(100% - 5em);
+        width: calc(100% - 5rem);
     }
 
     .d1 {
-        width: calc(1024px - 7.5em);
-        max-width: calc(100% - 2em);
+        width: calc(1024px - 7.5rem);
+        max-width: calc(100% - 2rem);
     }
 
     .d2 {
-        width: calc(1024px - 10em);
-        max-width: calc(100% - 2.5em);
+        width: calc(1024px - 10rem);
+        max-width: calc(100% - 2.5rem);
     }
 
 
@@ -87,25 +121,25 @@ ul {
 }
 
 .d0 {
-    width: calc(1024px - 5em);
+    width: calc(1024px - 5rem);
 }
 
 .d1 {
-    width: calc(1024px - 7.5em);
-    max-width: calc(100% - 2em);
+    width: calc(1024px - 7.5rem);
+    max-width: calc(100% - 2rem);
 }
 
 .d2 {
-    width: calc(1024px - 10em);
-    max-width: calc(100% - 2.5em);
-    padding-bottom: 0em;
+    width: calc(1024px - 10rem);
+    max-width: calc(100% - 2.5rem);
+    padding-bottom: 0rem;
 }
 
 ul .author {
     margin-left: 10px;
     color: gray;
     font-size: 14px;
-    padding-bottom: 1em;
+    padding-bottom: 1rem;
 }
 
 ul .comment {
@@ -127,10 +161,82 @@ ul>li.comment {
     padding: 5px;
 }
 
-.login {
-    display:inline-block;
+.user {
+    margin-left: auto;
+    padding-right: 2rem;
 }
 
-.login img {
+.user p {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.user img {
+    display: inline-block;
     width: 25px;
+    background-color: white;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+.titlebar {
+    display: flex;
+    background-color: var(--latte-overlay2);
+    flex-grow: 1;
+    /* justify-content: space-between; */
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+    /* margin: -1rem -1rem 0rem -1rem; */
+    border-bottom: 2px thick var(--latte-peach);
+    /* margin-bottom: 5rem; */
+}
+
+.titlebar h1 {
+    padding-left: 1rem;
+    /* color: var(--latte-sapphire) */
+}
+
+.titlebar:after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+.linker {
+    padding-top: 2rem;
+    /* justify-content: space-between; */
+    /* max-width: 1024px; */
+}
+
+.linker input {
+    /* display: inline-block; */
+    width: 60%;
+    /* width: 1024px; */
+    padding: 12px 20px;
+    border-radius: 8px;
+}
+
+.linker button {
+    /* display: inline-block; */
+}
+
+.linker p {
+
+}
+
+a.nostyle:link {
+    text-decoration: inherit;
+    color: inherit;
+    cursor: auto;
+}
+
+a.nostyle:visited {
+    text-decoration: inherit;
+    color: inherit;
+    cursor: auto;
+}
+
+a.nostyle:hover {
+    cursor: pointer;
 }

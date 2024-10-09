@@ -1,8 +1,16 @@
 {{define "head"}}
+<title>Commenteer - Login</title>
+{{end}}
+
+{{define "nav"}}
+<nav class="titlebar">
+    <a href="/" class="nostyle"><img class="logo" src="/static/cmtr.webp" alt="commenteer logo"></a>
+</nav>
 {{end}}
 
 {{define "body"}}
-<a href="/"><button>Home</button></a>
 <p>{{.}}</p>
-<a href="https://www.reddit.com/api/v1/authorize?client_id=S4zkpm8TIAqSndP7_gRwEg&response_type=code&state=RANDOM_STRING&redirect_uri=http://localhost:8090/login/&duration=permanent&scope=read,identity"><button>Continue with Reddit</button></a>
+<form action="/login/" method="post">
+    <button type="submit">Continue with Reddit</button>
+</form>
 {{end}}

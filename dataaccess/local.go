@@ -5,6 +5,7 @@ import (
 	"log"
 	c "main/common"
 	"os"
+	"time"
 )
 
 type Local struct{}
@@ -30,7 +31,7 @@ func (l Local) GetLink(req c.RedditRequest) (*c.Link, bool) {
 	return nil, false
 }
 
-func (l Local) AddLink(req c.RedditRequest, link *c.Link) {
+func (l Local) AddLink(req c.RedditRequest, link *c.Link, userId int) {
 	f, err := os.ReadFile("./static/cache.json")
 
 	if err != nil {
@@ -67,5 +68,17 @@ func (l Local) GetUser(username string) (*c.User, bool) {
 }
 
 func (l Local) AddUser(user c.User) bool {
+	return true
+}
+
+func (l Local) UpdateUser(username string, accessToken string, refreshExpireDtTm time.Time) bool {
+	return true
+}
+
+func (l Local) DecrementUserUploadCount(userId int) bool {
+	return true
+}
+
+func (l Local) RefreshUserUploadCount(userId int, newCount int) bool {
 	return true
 }

@@ -1,23 +1,32 @@
 {{define "head"}}
+<title>Commenteer</title>
 <script src="/static/home.js" async></script>
 {{end}}
 
-{{define "body"}}
-<div class="centered">
-    <h1>Commenteer</h1>
-    <label>hi: <input id="link" /></label> <button onclick="validateLink();">test</button>
-    <p id="linkError"></p>
-    {{if .UserCookie}}
+{{define "nav"}}
+<nav class="titlebar">
+    <a href="/" class="nostyle"><img class="logo" src="/static/cmtr.webp" alt="commenteer logo"></a>
     <div class="user">
+        {{if .UserCookie}}
         <p>{{.Username}}</p>
         <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
+        {{else}}
+        <a href="/login/"><button>Login</button></a>
     </div>
-    {{else}}
-    <a href="/login/"><button>Login</button></a>
     {{end}}
+</nav>
+{{end}}
 
+{{define "body"}}
+{{if .UserCookie}}
+<div class="container linker">
+    <input id="link" placeholder="https://www.reddit.com/r/pics/comments/1fvmr1o/a_picture_on_my_way_home/lq87zcb/"/>
+    <button onclick="validateLink();">Create</button>
+    <div>
+        <p id="linkError"></p>
+    </div>
 </div>
-
+{{end}}
 {{range $key, $value := .Posts}}
 <div class="container">
     <img src="{{.CdnUrl}}" alt="{{.ImageUrl}}" loading="lazy" />

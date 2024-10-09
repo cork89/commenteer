@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"context"
 	"log"
+	"main/common"
 	"main/snoo"
 	"net/http"
 	"time"
@@ -42,19 +44,68 @@ func Logging(next http.Handler) http.Handler {
 	})
 }
 
-func IsLoggedIn(next http.Handler) http.Handler {
+func IsLoggedInStrict(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userCookie, ok := snoo.GetUserCookie(r)
+		user, ok := snoo.GetUserCookie(r)
 
 		if ok {
-			if time.Now().UTC().Compare(userCookie.RefreshExpireDtTm) > -1 {
-				log.Printf("%s needs to re-auth", userCookie.Username)
-			}
+			ctx := context.WithValue(r.Context(), common.UserCtx, user)
+			r = r.Clone(ctx)
 			next.ServeHTTP(w, r)
 		} else {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		}
-		// slog.Info("IsLoggedIn", "method", r.Method, "path", r.URL.Path)
-		// next.ServeHTTP(w, r)
+	})
+}
+
+func CheckRemainingUploads(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		user, ok := ctx.Value(common.UserCtx).(*common.User)
+
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if user.RemainingUploads > 0 {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if time.Now().UTC().After(user.UploadRefreshDtTm) {
+			snoo.RefreshUserUploadCount(user)
+			next.ServeHTTP(w, r)
+		} else {
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		}
+	})
+}
+
+func IsLoggedIn(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		user, ok := ctx.Value(common.UserCtx).(*common.User)
+
+		if !ok {
+			user, ok = snoo.GetUserCookie(r)
+		}
+
+		if ok {
+			if time.Now().UTC().Compare(user.RefreshExpireDtTm) > -1 {
+				log.Printf("%s needs to re-auth", user.Username)
+				user, _ = snoo.RefreshRedditAccessToken(user)
+			}
+			ctx := context.WithValue(r.Context(), common.UserCtx, user)
+			r = r.Clone(ctx)
+			next.ServeHTTP(w, r)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
+func CacheControl(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=604800")
+		next.ServeHTTP(w, r)
 	})
 }

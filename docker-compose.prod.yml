@@ -1,0 +1,97 @@
+name: commenteer
+
+services:
+  watchtower:
+    image: containrrr/watchtower
+    command:
+      - "--label-enable"
+      - "--interval"
+      - "30"
+      - "--rolling-restart"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  reverse-proxy:
+    image: traefik:v3.1
+    command: 
+      # - "--api.insecure=true"
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificateresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificateresolvers.myresolver.acme.email=sean@commenteer.dev"
+      - "--certificateresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "entrypoints.web.address=:80"
+      - "entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+      # - "8090:8090"
+    volumes:
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+  app:
+    # build:
+    #   dockerfile: Dockerfile
+    #   context: .
+    #   target: base
+    image: cork89/commenteer-app
+    container_name: commenteer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`commenteer.dev`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
+    deploy:
+      mode: replicated
+      replicas: 3
+    # ports:
+    #   - "8090:8090"
+    networks:
+      - app-network
+  imgproxy:
+    image: darthsim/imgproxy:latest
+    container_name: imgproxy
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - IMGPROXY_ALLOW_ORIGIN=https://commenteer.dev
+      - IMGPROXY_ALLOWED_SOURCES=*
+    #   # Add imgproxy configuration environment variables if needed
+    #   - IMGPROXY_KEY=your_key
+    #   - IMGPROXY_SALT=your_salt
+    #   - IMGPROXY_ALLOWED_SOURCES=https://example.com
+  postgres:
+    image: postgres:latest
+    container_name: local_pgdb
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - local_pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - 5050:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  local_pgdata:
+  pgadmin-data:
+  letsencrypt:
+  

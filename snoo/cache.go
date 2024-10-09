@@ -23,7 +23,7 @@ func populateCache() {
 }
 
 func addToCache(req c.RedditRequest, link *c.Link) {
-	dataaccess.AddLink(req, link)
+	dataaccess.AddLink(req, link, 0)
 	linkCache[req] = *link
 }
 

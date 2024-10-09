@@ -9,6 +9,7 @@ import (
 	c "main/common"
 	d "main/dataaccess"
 	"main/middleware"
+	"main/snoo"
 	s "main/snoo"
 	"net/http"
 	"regexp"
@@ -21,10 +22,6 @@ var tmpl map[string]*template.Template
 var validPathValue = regexp.MustCompile("^[a-zA-Z0-9]+-[a-zA-Z0-9]{7}-[a-zA-Z0-9]{7}$")
 
 func extractRedditRequest(r *http.Request) (*c.RedditRequest, error) {
-	// m := validPaths.FindStringSubmatch(r.URL.Path)
-	// if len(m) < 3 {
-	// 	return nil, errors.New("invalid url")
-	// }
 	m := validPathValue.FindStringSubmatch(r.PathValue("id"))
 	log.Println("m: ", m)
 	parts := strings.Split(m[0], "-")
@@ -35,31 +32,7 @@ func extractRedditRequest(r *http.Request) (*c.RedditRequest, error) {
 	return &c.RedditRequest{Subreddit: parts[0], Article: parts[1], Comment: parts[2]}, nil
 }
 
-func commentHandler(w http.ResponseWriter, r *http.Request) {
-	redditRequest, err := extractRedditRequest(r)
-
-	var data *c.Link
-	if err != nil {
-		log.Println(err)
-		data = s.CreateErrorLink()
-	} else {
-		link, ok := d.GetLink(*redditRequest)
-		if ok {
-			data = link
-		}
-	}
-	fmt.Println(data)
-	tmpl["comments"].ExecuteTemplate(w, "base", data)
-}
-
-func imageHandler(w http.ResponseWriter, r *http.Request) {
-	url := s.GetImgProxyUrl("https://i.redd.it/h2y07ob2m3od1.png")
-	log.Println(url)
-}
-
 func saveHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("saveHandler")
-
 	defer r.Body.Close()
 	redditRequest, err := extractRedditRequest(r)
 	if err != nil {
@@ -67,6 +40,15 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	if !ok {
+		log.Println("user context missing")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	contentType := r.Header.Get("Content-Type")
 	imageType := strings.Split(contentType, "/")[1]
 	fileName := fmt.Sprintf("%s.%s", redditRequest.AsString(), imageType)
@@ -85,44 +67,69 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cdnUrl := fmt.Sprintf("%s/%s.%s", s.CdnBaseUrl, redditRequest.AsString(), imageType)
 	d.UpdateCdnUrl(*redditRequest, cdnUrl)
+	go snoo.DecrementUserUploadCount(user)
 
-	// w.WriteHeader(http.StatusCreated)
-	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusSeeOther)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("editHandler")
+	var singleLinkData c.SingleLinkData
 
-	fmt.Println(
-		"Path Value: ", r.PathValue("id"))
 	redditRequest, err := extractRedditRequest(r)
 	var data *c.Link
+
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	if !ok {
+		log.Println("user context missing")
+		return
+	}
+
 	if err != nil {
 		log.Println(err)
 		data = s.CreateErrorLink()
 	} else {
 		link := make(chan *c.Link)
-		go s.GetRedditDetails(*redditRequest, link)
+		go s.GetRedditDetails(*redditRequest, link, user)
 		data = <-link
 	}
-	tmpl["edit"].ExecuteTemplate(w, "base", data)
+	singleLinkData.Link = data
+
+	singleLinkData.UserCookie = &user.UserCookie
+	singleLinkData.RedditRequest = redditRequest.AsString()
+
+	tmpl["edit"].ExecuteTemplate(w, "base", singleLinkData)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("viewHandler")
+	var singleLinkData c.SingleLinkData
 	redditRequest, err := extractRedditRequest(r)
 
 	var data *c.Link
+
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	if !ok {
+		log.Println("user context missing")
+	} else {
+		singleLinkData.UserCookie = &user.UserCookie
+	}
+
 	if err != nil {
 		log.Println(err)
 		data = s.CreateErrorLink()
 	} else {
 		link := make(chan *c.Link)
-		go s.GetRedditDetails(*redditRequest, link)
+		go s.GetRedditDetails(*redditRequest, link, user)
 		data = <-link
 	}
 
-	tmpl["view"].ExecuteTemplate(w, "base", data)
+	singleLinkData.Link = data
+	singleLinkData.RedditRequest = redditRequest.AsString()
+
+	// user, _ := s.GetUserCookie(r)
+
+	tmpl["view"].ExecuteTemplate(w, "base", singleLinkData)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -132,9 +139,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := s.GetUserCookie(r)
 	if ok {
-		homeData.UserCookie = *user
+		homeData.UserCookie = &user.UserCookie
 	}
 	tmpl["home"].ExecuteTemplate(w, "base", homeData)
+}
+
+func loginPostHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, s.RedditAuthUrl, http.StatusSeeOther)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,11 +171,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		userData := s.GetUserData(*accessToken)
-		userAdded := d.AddUser(userData)
-		if !userAdded {
-			test = "something went wrong :("
-			tmpl["login"].ExecuteTemplate(w, "base", test)
-			return
+		_, ok = d.GetUser(userData.Username)
+		if !ok {
+			userAdded := d.AddUser(userData)
+			if !userAdded {
+				test = "something went wrong :("
+				tmpl["login"].ExecuteTemplate(w, "base", test)
+				return
+			}
 		}
 		cookie := s.CreateUserCookie(userData.UserCookie)
 		http.SetCookie(w, &cookie)
@@ -184,7 +198,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// tmpl["home"].ExecuteTemplate(w, "base")
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-	//homeHandler(w, r)
 }
 
 func main() {
@@ -196,14 +209,13 @@ func main() {
 	tmpl["comments"] = template.Must(template.ParseFiles("static/comments.html", "static/base.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
 
-	// http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-
 	router := http.NewServeMux()
 
-	// router.HandleFunc("/e/", editHandler)
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	router.HandleFunc("/", homeHandler)
-	router.HandleFunc("/login/", loginHandler)
+	router.HandleFunc("GET /login/", loginHandler)
+	router.HandleFunc("POST /login/", loginPostHandler)
 	loggedInRouter := http.NewServeMux()
 	loggedInRouter.HandleFunc("GET /r/{id}/submit/", editHandler)
 	loggedInRouter.HandleFunc("POST /r/{id}/submit/", saveHandler)
@@ -211,10 +223,16 @@ func main() {
 
 	stack := middleware.CreateStack(
 		middleware.Logging,
-		// middleware.IsLoggedIn,
+		middleware.CacheControl,
+		middleware.IsLoggedIn,
 	)
 
-	router.Handle("/r/{id}/submit/", middleware.IsLoggedIn(loggedInRouter))
+	strict := middleware.CreateStack(
+		middleware.CheckRemainingUploads,
+		middleware.IsLoggedInStrict,
+	)
+
+	router.Handle("/r/{id}/submit/", strict(loggedInRouter))
 
 	server := http.Server{
 		Addr:    ":8090",

@@ -25,6 +25,7 @@ type Link struct {
 	RedditComments []Comment
 	LinkType       Base
 	CdnUrl         string
+	UserId         int
 }
 
 type Comment struct {
@@ -41,15 +42,30 @@ type UserCookie struct {
 
 type User struct {
 	UserCookie
-	Subscribed       bool
-	SubscriptionDtTm string
-	RefreshToken     string
+	Subscribed        bool
+	SubscriptionDtTm  string
+	RefreshToken      string
+	UserId            int
+	RemainingUploads  int
+	UploadRefreshDtTm time.Time
 }
 
 type HomeData struct {
-	UserCookie
+	*UserCookie
 	Posts map[string]Link
 }
+
+type SingleLinkData struct {
+	*UserCookie
+	*Link
+	RedditRequest string
+}
+
+type HttpContext string
+
+const (
+	UserCtx HttpContext = "UserCtx"
+)
 
 func (req RedditRequest) AsString() string {
 	return fmt.Sprintf("%s-%s-%s", req.Subreddit, req.Article, req.Comment)

@@ -35,6 +35,7 @@ async function takeScreenshot() {
         body: imgData,
         // mode: 'cors',
         redirect: "follow",
+        credentials: 'include',
     });
     // console.log(res1)
     if (!res.ok) {

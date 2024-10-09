@@ -32,7 +32,7 @@ var CdnBaseUrl string
 var redditCaller RedditCaller
 
 type RedditCaller interface {
-	callRedditApi(req c.RedditRequest) (link *c.Link, err error)
+	callRedditApi(req c.RedditRequest, user *c.User) (link *c.Link, err error)
 }
 
 type RealRedditCaller struct{}
@@ -94,7 +94,7 @@ func parseJsonData(data []map[string]interface{}, commentId string) *c.Link {
 	return &c.Link{ImageUrl: imageUrl, RedditComments: comments, LinkType: linkType}
 }
 
-func (f FakeRedditCaller) callRedditApi(req c.RedditRequest) (link *c.Link, err error) {
+func (f FakeRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link *c.Link, err error) {
 	link, ok := dataaccess.GetLink(req)
 	if ok {
 		return link, nil
@@ -117,11 +117,11 @@ func (f FakeRedditCaller) callRedditApi(req c.RedditRequest) (link *c.Link, err 
 	link = parseJsonData(jsonData, req.Comment)
 	link.ProxyUrl = GetImgProxyUrl(link.ImageUrl)
 	// go addToCache(req, link)
-	dataaccess.AddLink(req, link)
+	dataaccess.AddLink(req, link, user.UserId)
 	return link, nil
 }
 
-func parseApiResponse(res *http.Response, req c.RedditRequest) (link *c.Link, err error) {
+func parseApiResponse(res *http.Response, req c.RedditRequest, user *c.User) (link *c.Link, err error) {
 	log.Println("Entering ParseApiResponse")
 	log.Println(res.StatusCode)
 	if res.StatusCode == http.StatusOK {
@@ -144,7 +144,7 @@ func parseApiResponse(res *http.Response, req c.RedditRequest) (link *c.Link, er
 
 		link.ProxyUrl = GetImgProxyUrl(link.ImageUrl)
 		// go addToCache(req, link)
-		dataaccess.AddLink(req, link)
+		dataaccess.AddLink(req, link, user.UserId)
 		log.Println("Leaving ParseApiResponse")
 		return link, nil
 	}
@@ -152,30 +152,34 @@ func parseApiResponse(res *http.Response, req c.RedditRequest) (link *c.Link, er
 	return CreateErrorLink(), nil
 }
 
-func (r RealRedditCaller) callRedditApi(req c.RedditRequest) (link *c.Link, err error) {
+func (r RealRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link *c.Link, err error) {
 	link, ok := dataaccess.GetLink(req)
 	if ok {
-		log.Printf("Pulled from db: %s", req.AsString())
-		return link, nil
+		if link.UserId == user.UserId {
+			log.Printf("Pulled from db: %s", req.AsString())
+			return link, nil
+		} else {
+			return nil, fmt.Errorf("trying to access a post that isn't yours, user: %d", user.UserId)
+		}
 	}
 
 	log.Printf("request: %s\n", req)
 
-	base := "https://reddit.com"
+	base := "https://oauth.reddit.com"
 	subreddit := fmt.Sprintf("r/%s", req.Subreddit)
 	article := fmt.Sprintf("comments/%s.json", req.Article)
 	comment := fmt.Sprintf("?comment=%s", req.Comment)
 	context := fmt.Sprintf("&context=%s", "3")
 	limit := fmt.Sprintf("&limit=%s", "5")
 	showmedia := fmt.Sprintf("&showmedia=%s", "true")
-	accessToken := fmt.Sprintf("&access_token=%s", redditAccessToken)
+	// accessToken := fmt.Sprintf("&access_token=%s", redditAccessToken)
 
 	requestUrl, err := url.JoinPath(base, subreddit, article)
 	if err != nil {
 		log.Println("Error calling reddit api")
 	}
 
-	requestUrl = fmt.Sprintf("%s%s%s%s%s%s", requestUrl, comment, context, limit, showmedia, accessToken)
+	requestUrl = fmt.Sprintf("%s%s%s%s%s", requestUrl, comment, context, limit, showmedia)
 
 	log.Printf("Calling: %s\n", requestUrl)
 	// res, err := http.Get(requestUrl)
@@ -188,28 +192,30 @@ func (r RealRedditCaller) callRedditApi(req c.RedditRequest) (link *c.Link, err 
 	// 	"user-agent": {"test"},
 	// }
 	// client := http.Client{}
-	res, err := http.Get(requestUrl)
+	dataRequest, err := http.NewRequest("GET", requestUrl, nil)
+	dataRequest.Header.Add("Authorization", fmt.Sprintf("Bearer %s", user.AccessToken))
+	log.Println(user.AccessToken)
+
+	res, err := client.Do(dataRequest)
+
+	// res, err := http.Get(requestUrl)
 	//client.Do(req2)
 	if err != nil {
 		log.Println("Error calling reddit api")
 	}
 	defer res.Body.Close()
 
-	link, err = parseApiResponse(res, req)
-	return link, err
+	return parseApiResponse(res, req, user)
 }
 
 func CreateErrorLink() (link *c.Link) {
 	comment := c.Comment{Author: "oops", Comment: "brokie"}
 	comments := []c.Comment{comment}
-	return &c.Link{ImageUrl: "/static/error.jpg", ProxyUrl: "/static/error.jpg", RedditComments: comments}
+	return &c.Link{ImageUrl: "/static/error.webp", ProxyUrl: "/static/error.webp", RedditComments: comments}
 }
 
-func GetRedditDetails(req c.RedditRequest, link chan *c.Link) {
-	var res *c.Link
-	var err error
-	log.Println("get reddit details")
-	res, err = redditCaller.callRedditApi(req)
+func GetRedditDetails(req c.RedditRequest, link chan *c.Link, user *c.User) {
+	res, err := redditCaller.callRedditApi(req, user)
 	if err != nil {
 		log.Printf("error making http request: %s\n", err)
 		res = CreateErrorLink()

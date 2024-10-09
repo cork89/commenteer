@@ -2,10 +2,11 @@ name: commenteer
 
 services:
   app:
-    build:
-      dockerfile: Dockerfile
-      context: .
-      target: base
+    # build:
+    #   dockerfile: Dockerfile
+    #   context: .
+    #   target: base
+    image: cork89/commenteer-app:latest
     container_name: commenteer
     ports:
       - "8090:8090"
@@ -29,8 +30,10 @@ services:
     image: postgres:latest
     container_name: local_pgdb
     restart: always
+    networks:
+      - app-network
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -41,6 +44,8 @@ services:
     image: dpage/pgadmin4:latest
     container_name: pgadmin4_container
     restart: always
+    networks:
+      - app-network
     ports:
       - 5050:80
     environment:

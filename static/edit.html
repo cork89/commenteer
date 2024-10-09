@@ -1,21 +1,31 @@
 {{define "head"}}
+<title>Commenteer - {{.RedditRequest}} - Submit</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
     integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/static/edit.js"></script>
 {{end}}
 
+{{define "nav"}}
+<nav class="titlebar">
+    <a href="/" class="nostyle"><img class="logo" src="/static/cmtr.webp"></a>
+    <div class="user">
+        {{if .UserCookie}}
+        <p>{{.Username}}</p>
+        <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
+        {{end}}
+    </div>
+</nav>
+{{end}}
+
 {{define "body"}}
-<a href="/"><button>home</button></a>
-<button onclick="takeScreenshot();">screenshot</button>
-<h1>edit</h1>
+<div class="container">
+    <button onclick="takeScreenshot();">Finalize</button>
+</div>
 <div class="container">
     <div class="image-comment-container">
         <div class="image-container">
-            <!--http://localhost:8090/image/-->
             <img src="{{.ProxyUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
-            <!-- <img src="/static/g5v4dmeakwod1.png" alt="{{.ImageUrl}}" loading="lazy" /> -->
-
         </div>
         <div class="comment-container">
             {{range $i, $comment := .RedditComments}}

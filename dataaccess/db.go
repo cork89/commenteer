@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	c "main/common"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,7 +31,7 @@ func getConnection(postgresUrl string) {
 func (d Db) GetRecentLinks(page int) (links map[string]c.Link) {
 	offset := (page - 1) * 10
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id
 FROM links l, comments c
 WHERE l.link_id in (SELECT l2.link_id FROM links l2 ORDER BY l2.created_date DESC LIMIT 10 OFFSET ($1)) 
 and l.link_id = c.link_id;`, offset)
@@ -39,7 +40,7 @@ and l.link_id = c.link_id;`, offset)
 
 func (d Db) GetLinks() (links map[string]c.Link) {
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id
 FROM links l, comments c
 WHERE l.link_id = c.link_id
 ORDER BY l.created_date
@@ -49,7 +50,7 @@ LIMIT 30`)
 
 func (d Db) GetLink(req c.RedditRequest) (*c.Link, bool) {
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id
 FROM links l, comments c
 WHERE l.link_id = c.link_id and l.query_id = ($1)`, req.AsString())
 	if err != nil {
@@ -75,7 +76,7 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 		var queryId string
 		var link c.Link
 		var comment c.Comment
-		err := rows.Scan(&link.ImageUrl, &link.ProxyUrl, &queryId, &link.CdnUrl, &comment.Comment, &comment.Author)
+		err := rows.Scan(&link.ImageUrl, &link.ProxyUrl, &queryId, &link.CdnUrl, &comment.Comment, &comment.Author, &link.UserId)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
@@ -96,11 +97,11 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 	return links
 }
 
-func (d Db) AddLink(req c.RedditRequest, link *c.Link) {
+func (d Db) AddLink(req c.RedditRequest, link *c.Link, userId int) {
 	var linkId int
-	query := "INSERT INTO links (image_url, proxy_url, query_id, cdn_image_url) VALUES ($1, $2, $3, '') RETURNING link_id"
-	args := []any{link.ImageUrl, link.ProxyUrl, req.AsString()}
-	err := dbpool.QueryRow(context.Background(), query, args[0], args[1], args[2]).Scan(&linkId)
+	query := "INSERT INTO links (image_url, proxy_url, query_id, cdn_image_url, user_id) VALUES ($1, $2, $3, '', $4) RETURNING link_id"
+	args := []any{link.ImageUrl, link.ProxyUrl, req.AsString(), userId}
+	err := dbpool.QueryRow(context.Background(), query, args[0], args[1], args[2], args[3]).Scan(&linkId)
 
 	if err != nil {
 		log.Printf("error inserting link: %v\n", err)
@@ -126,7 +127,7 @@ func (d Db) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
 	err := dbpool.QueryRow(context.Background(), query, args[0], args[1])
 
 	if err != nil {
-		log.Printf("error updating link: %v\n", err)
+		log.Printf("error updating link: %v, cdnUrl: %s, err: %v\n", req, cdnUrl, err)
 		return
 	}
 }
@@ -134,8 +135,8 @@ func (d Db) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
 func (d Db) GetUser(username string) (*c.User, bool) {
 	// var userCookie c.UserCookie
 	var user c.User
-	query := "SELECT username,subscribed,refresh_token,refresh_expire_dt_tm,icon_url,access_token from users where username = ($1)"
-	err := dbpool.QueryRow(context.Background(), query, username).Scan(&user.Username, &user.Subscribed, &user.RefreshToken, &user.RefreshExpireDtTm, &user.IconUrl, &user.AccessToken)
+	query := "SELECT username,subscribed,refresh_token,refresh_expire_dt_tm,icon_url,access_token,user_id,remaining_uploads,upload_refresh_dt_tm from users where username = ($1)"
+	err := dbpool.QueryRow(context.Background(), query, username).Scan(&user.Username, &user.Subscribed, &user.RefreshToken, &user.RefreshExpireDtTm, &user.IconUrl, &user.AccessToken, &user.UserId, &user.RemainingUploads, &user.UploadRefreshDtTm)
 
 	if err != nil {
 		log.Println("no user found, ", err)
@@ -158,13 +159,37 @@ func (d Db) AddUser(user c.User) bool {
 	return true
 }
 
-func (d Db) UpdateUser(username string, refreshToken string, refreshExpireDtTm string) {
-	query := "UPDATE users (refresh_token, refresh_expire_dt_tm) VALUES ($1, &2) where username = ($3)"
-	_, err := dbpool.Exec(context.Background(), query, refreshToken, refreshExpireDtTm, username)
+func (d Db) UpdateUser(username string, accessToken string, refreshExpireDtTm time.Time) bool {
+	query := "UPDATE users SET access_token = $1, refresh_expire_dt_tm = $2 where username = ($3)"
+	args := []any{accessToken, refreshExpireDtTm, username}
+	_, err := dbpool.Exec(context.Background(), query, args[0], args[1], args[2])
 	if err != nil {
 		log.Printf("error updating user: %v\n", err)
+		return false
 	}
+	return true
+}
 
+func (d Db) DecrementUserUploadCount(userId int) bool {
+	query := "UPDATE users SET remaining_uploads = remaining_uploads - 1 where user_id = ($1)"
+	args := []any{userId}
+	_, err := dbpool.Exec(context.Background(), query, args[0])
+	if err != nil {
+		log.Printf("error updating user: %v\n", err)
+		return false
+	}
+	return true
+}
+
+func (d Db) RefreshUserUploadCount(userId int, newCount int) bool {
+	query := "UPDATE users SET remaining_uploads = ($1), upload_refresh_dt_tm = NOW() + INTERVAL '1 week' where user_id = ($2)"
+	args := []any{newCount, userId}
+	_, err := dbpool.Exec(context.Background(), query, args[0], args[1])
+	if err != nil {
+		log.Printf("error updating user: %v\n", err)
+		return false
+	}
+	return true
 }
 
 func init() {
