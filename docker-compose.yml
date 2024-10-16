@@ -2,16 +2,17 @@ name: commenteer
 
 services:
   app:
-    # build:
-    #   dockerfile: Dockerfile
-    #   context: .
-    #   target: base
     image: cork89/commenteer-app:latest
     container_name: commenteer
     ports:
       - "8090:8090"
     networks:
       - app-network
+    secrets:
+      - .env.local
+    environment:
+      POSTGRES_HOST: local_pgdb
+      .env.local: /run/secrets/.env.local
   imgproxy:
     image: darthsim/imgproxy:latest
     container_name: imgproxy
@@ -21,11 +22,10 @@ services:
       - app-network
     environment:
       - IMGPROXY_ALLOW_ORIGIN=*
-      - IMGPROXY_ALLOWED_SOURCES=*
-    #   # Add imgproxy configuration environment variables if needed
-    #   - IMGPROXY_KEY=your_key
-    #   - IMGPROXY_SALT=your_salt
-    #   - IMGPROXY_ALLOWED_SOURCES=https://example.com
+      - IMGPROXY_ALLOWED_SOURCES=https://*.reddit.com/,https://i.redd.it/,https://i.imgur.com/,https://b.thumbs.redditmedia.com/
+      - IMGPROXY_WATERMARK_URL=https://pub-593a43bc7b42437089b8412f046d013b.r2.dev/madewith2.webp
+      - IMGPROXY_KEY=${IMGPROXY_KEY_HEX}
+      - IMGPROXY_SALT=${IMGPROXY_SALT_HEX}
   postgres:
     image: postgres:latest
     container_name: local_pgdb
@@ -35,9 +35,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_DB=${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - local_pgdata:/var/lib/postgresql/data
   pgadmin:
@@ -49,10 +49,13 @@ services:
     ports:
       - 5050:80
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+secrets:
+  .env.local:
+    file: ./run/secrets/.env.local
 networks:
   app-network:
     driver: bridge

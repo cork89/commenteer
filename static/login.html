@@ -9,8 +9,15 @@
 {{end}}
 
 {{define "body"}}
-<p>{{.}}</p>
+<!-- <p>{{.}}</p> -->
 <form action="/login/" method="post">
-    <button type="submit">Continue with Reddit</button>
+    <div class="container">
+        <div class="image-comment-container">
+            <div class="container">Log In</div>
+            <div class="container">
+                <button type="submit">Continue with Reddit</button>
+            </div>
+        </div>
+    </div>
 </form>
 {{end}}

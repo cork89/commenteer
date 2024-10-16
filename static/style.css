@@ -221,9 +221,7 @@ ul>li.comment {
     /* display: inline-block; */
 }
 
-.linker p {
-
-}
+.linker p {}
 
 a.nostyle:link {
     text-decoration: inherit;
@@ -239,4 +237,21 @@ a.nostyle:visited {
 
 a.nostyle:hover {
     cursor: pointer;
+}
+
+button,
+[role="button"] {
+    cursor: pointer;
+    border-radius: 0.375 rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    height: 2.5rem;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+:disabled {
+    cursor: default;
 }

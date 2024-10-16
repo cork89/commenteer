@@ -17,15 +17,8 @@ async function takeScreenshot() {
     const canvas = await html2canvas(document.querySelector(".image-comment-container"), { allowTaint: true, useCORS: true });
     let data = canvas.toDataURL("image/webp");
     const pathname = window.location.pathname.split("/")[2];
-    // const url = `http://localhost:8090/r/${pathname}/submit`;
     const url = `http://localhost:8090/r/${pathname}/submit/`;
-    console.log("url: ", url);
-    // <!-- remove
-//     download(data)
-// return;
-    // console.log("img: ", img)
     const [type, imgData] = data.split(",")
-    console.log("type: ", type, "\n", "imgData: ", imgData);
     const headers = new Headers();
     headers.append("Content-Type", "image/webp");
     headers.append("Content-Transfer-Encoding", "base64")
@@ -33,15 +26,11 @@ async function takeScreenshot() {
         headers: headers,
         method: "POST",
         body: imgData,
-        // mode: 'cors',
         redirect: "follow",
         credentials: 'include',
     });
-    // console.log(res1)
     if (!res.ok) {
         console.log("failed to post image")
-        // alert("something went wrong :(")
-        // document.querySelector("")
     }
     else {
         console.log("success posting")

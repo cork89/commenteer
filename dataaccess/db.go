@@ -2,6 +2,7 @@ package dataaccess
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	c "main/common"
@@ -193,11 +194,17 @@ func (d Db) RefreshUserUploadCount(userId int, newCount int) bool {
 }
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load("/run/secrets/.env.local")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
-	postgresUrl := os.Getenv("POSTGRES_URL")
+	postgresUser := os.Getenv("POSTGRES_USER")
+	postgresPw := os.Getenv("POSTGRES_PASSWORD")
+	postgresHost := os.Getenv("POSTGRES_HOST")
+	postgresPort := os.Getenv("POSTGRES_PORT")
+	postgresDb := os.Getenv("POSTGRES_DB")
+
+	postgresUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", postgresUser, postgresPw, postgresHost, postgresPort, postgresDb)
 	getConnection(postgresUrl)
 }

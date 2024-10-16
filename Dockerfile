@@ -1,13 +1,21 @@
-# syntax=docker/dockerfile:1
+FROM golang:1.22.5-alpine AS builder
 
-FROM golang:1.22.5-alpine AS base
+WORKDIR /build
+
+COPY . .
+
+RUN go mod download
+RUN go build -o ./docker-commenteer
+
+# Stage 2: Runtime stage (using alpine as the base image)
+FROM alpine:latest AS runtime
 
 WORKDIR /app
 
-ADD . /app
-RUN go mod download
-RUN go build -o /docker-commenteer
+# Copy the executable from the build stage to the runtime stage
+COPY --from=builder /build/docker-commenteer ./docker-commenteer
+COPY --from=builder /build/static ./static/
 
 EXPOSE 8090
 
-CMD ["/docker-commenteer"]
+CMD ["/app/docker-commenteer"]

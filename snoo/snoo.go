@@ -115,7 +115,10 @@ func (f FakeRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link
 		log.Printf("error unmarshalling: %s\n", err)
 	}
 	link = parseJsonData(jsonData, req.Comment)
-	link.ProxyUrl = GetImgProxyUrl(link.ImageUrl)
+	link.ProxyUrl, err = GetImgProxyUrl(link.ImageUrl)
+	if err != nil {
+		return CreateErrorLink(), nil
+	}
 	// go addToCache(req, link)
 	dataaccess.AddLink(req, link, user.UserId)
 	return link, nil
@@ -142,7 +145,11 @@ func parseApiResponse(res *http.Response, req c.RedditRequest, user *c.User) (li
 		}
 		link = parseJsonData(jsonData, req.Comment)
 
-		link.ProxyUrl = GetImgProxyUrl(link.ImageUrl)
+		link.ProxyUrl, err = GetImgProxyUrl(link.ImageUrl)
+
+		if err != nil {
+			return CreateErrorLink(), nil
+		}
 		// go addToCache(req, link)
 		dataaccess.AddLink(req, link, user.UserId)
 		log.Println("Leaving ParseApiResponse")
@@ -157,7 +164,9 @@ func (r RealRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link
 	if ok {
 		if link.UserId == user.UserId {
 			log.Printf("Pulled from db: %s", req.AsString())
-			return link, nil
+			link.ProxyUrl, err = GetImgProxyUrl(link.ImageUrl)
+			log.Println(link)
+			return link, err
 		} else {
 			return nil, fmt.Errorf("trying to access a post that isn't yours, user: %d", user.UserId)
 		}
@@ -238,9 +247,9 @@ func GetRedditDetails(req c.RedditRequest, link chan *c.Link, user *c.User) {
 // }
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load("/run/secrets/.env.local")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	redditAccessToken = os.Getenv("REDDIT_ACCESS_TOKEN")

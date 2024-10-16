@@ -6,6 +6,7 @@ import (
 	"main/common"
 	"main/snoo"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -82,6 +83,11 @@ func CheckRemainingUploads(next http.Handler) http.Handler {
 
 func IsLoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.RequestURI, "/static/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		ctx := r.Context()
 		user, ok := ctx.Value(common.UserCtx).(*common.User)
 

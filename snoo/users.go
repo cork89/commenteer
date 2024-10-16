@@ -81,11 +81,6 @@ func CreateUserJwt(user common.UserCookie) string {
 }
 
 func CreateUserCookie(userCookie common.UserCookie) http.Cookie {
-	// cookieVal, err := json.Marshal(userCookie)
-	// if err != nil {
-	// 	log.Printf("error marshalling cookie, %v\n", err)
-	// }
-
 	jwt := CreateUserJwt(userCookie)
 
 	cookie := http.Cookie{
@@ -133,9 +128,6 @@ func GetUserCookie(r *http.Request) (userCookie *common.User, ok bool) {
 		return nil, false
 	}
 
-	// if err = json.Unmarshal(cookieVal, userCookie); err != nil {
-	// 	log.Printf("error unmarshalling cookie, %v\n", err)
-	// }
 	return user, true
 }
 
@@ -174,8 +166,6 @@ func GetUserData(accessToken AccessTokenBody) (user common.User) {
 }
 
 func callRefreshAccessTokenApi(postBody PostBody) (*http.Response, error) {
-	// reader := bytes.NewReader(bodyBytes)
-
 	data := url.Values{}
 	data.Set("grant_type", postBody.GrantType)
 	data.Set("refresh_token", postBody.RefreshToken)
@@ -193,8 +183,6 @@ func callRefreshAccessTokenApi(postBody PostBody) (*http.Response, error) {
 }
 
 func callAccessTokenApi(postBody PostBody) (*http.Response, error) {
-	// reader := bytes.NewReader(bodyBytes)
-
 	data := url.Values{}
 	data.Set("grant_type", postBody.GrantType)
 	data.Set("code", postBody.Code)
@@ -235,8 +223,6 @@ func GetRedditAccessToken(state string, code string) (accessToken *AccessTokenBo
 		return nil, false
 	}
 
-	// if (res.StatusCode == http.Status)
-
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			log.Println("error closing body: ", err)
@@ -248,7 +234,6 @@ func GetRedditAccessToken(state string, code string) (accessToken *AccessTokenBo
 		log.Println("failed to read response body")
 		return nil, false
 	}
-	log.Printf("resBody: %s\n", resBody)
 
 	err = json.Unmarshal(resBody, &accessToken)
 	if err != nil {
@@ -273,8 +258,6 @@ func RefreshRedditAccessToken(user *common.User) (*common.User, bool) {
 		return user, false
 	}
 
-	// if (res.StatusCode == http.Status)
-
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			log.Println("error closing body: ", err)
@@ -293,7 +276,6 @@ func RefreshRedditAccessToken(user *common.User) (*common.User, bool) {
 		log.Println("error unmarshalling response")
 		return user, false
 	}
-	// username string, accessToken string, refreshExpireDtTm string
 	go dataaccess.UpdateUser(user.Username, accessToken.AccessToken, accessToken.GetExpireDtTm())
 	user.AccessToken = accessToken.AccessToken
 	user.RefreshExpireDtTm = accessToken.GetExpireDtTm()

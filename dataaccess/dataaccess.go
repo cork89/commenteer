@@ -67,9 +67,9 @@ func RefreshUserUploadCount(userId int, newCount int) bool {
 }
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load("/run/secrets/.env.local")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	dataAccessType = os.Getenv("DATA_ACCESS_TYPE")
