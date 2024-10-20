@@ -1,15 +1,9 @@
 package dataaccess
 
 import (
-	"log"
 	c "main/common"
-	"os"
 	"time"
-
-	"github.com/joho/godotenv"
 )
-
-var dataAccessType string
 
 var dataAccess DataAccess
 
@@ -39,11 +33,11 @@ func GetLink(req c.RedditRequest) (*c.Link, bool) {
 }
 
 func AddLink(req c.RedditRequest, link *c.Link, userId int) {
-	go dataAccess.AddLink(req, link, userId)
+	dataAccess.AddLink(req, link, userId)
 }
 
 func UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
-	go dataAccess.UpdateCdnUrl(req, cdnUrl)
+	dataAccess.UpdateCdnUrl(req, cdnUrl)
 }
 
 func GetUser(username string) (*c.User, bool) {
@@ -66,14 +60,22 @@ func RefreshUserUploadCount(userId int, newCount int) bool {
 	return dataAccess.RefreshUserUploadCount(userId, newCount)
 }
 
-func init() {
-	err := godotenv.Load("/run/secrets/.env.local")
-	if err != nil {
-		log.Println(err)
-	}
+// func init() {
+// 	err := godotenv.Load("/run/secrets/.env.local")
+// 	if err != nil {
+// 		log.Println(err)
+// 	}
 
-	dataAccessType = os.Getenv("DATA_ACCESS_TYPE")
+// 	dataAccessType := os.Getenv("DATA_ACCESS_TYPE")
 
+// 	if dataAccessType == "local" {
+// 		dataAccess = &Local{}
+// 	} else {
+// 		dataAccess = &Db{}
+// 	}
+// }
+
+func Initialize(dataAccessType string) {
 	if dataAccessType == "local" {
 		dataAccess = &Local{}
 	} else {

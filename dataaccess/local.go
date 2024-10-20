@@ -1,62 +1,30 @@
 package dataaccess
 
 import (
-	"encoding/json"
-	"log"
 	c "main/common"
-	"os"
 	"time"
 )
 
 type Local struct{}
 
-func (l Local) GetRecentLinks(page int) (linkJson map[string]c.Link) {
-	return nil
+var links map[string]c.Link
+var users map[string]c.User
+
+func (l Local) GetRecentLinks(page int) map[string]c.Link {
+	return links
 }
 
-func (l Local) GetLinks() (linkJson map[string]c.Link) {
-	f, err := os.ReadFile("./static/cache.json")
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = json.Unmarshal(f, &linkJson)
-	if err != nil {
-		log.Println(err)
-	}
-	return linkJson
+func (l Local) GetLinks() map[string]c.Link {
+	return links
 }
 
 func (l Local) GetLink(req c.RedditRequest) (*c.Link, bool) {
-	return nil, false
+	link, ok := links[req.AsString()]
+	return &link, ok
 }
 
 func (l Local) AddLink(req c.RedditRequest, link *c.Link, userId int) {
-	f, err := os.ReadFile("./static/cache.json")
-
-	if err != nil {
-		log.Println(err)
-	}
-	var linkJson map[string]*c.Link
-	err = json.Unmarshal(f, &linkJson)
-	if err != nil {
-		log.Println(err)
-	}
-	smallReq := req.AsString()
-
-	_, ok := linkJson[smallReq]
-	if !ok {
-		linkJson[smallReq] = link
-	}
-	fileJson, err := json.Marshal(linkJson)
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = os.WriteFile("./static/cache.json", fileJson, 0644)
-	if err != nil {
-		log.Println(err)
-	}
+	links[req.AsString()] = *link
 }
 
 func (l Local) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
@@ -64,10 +32,12 @@ func (l Local) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
 }
 
 func (l Local) GetUser(username string) (*c.User, bool) {
-	return &c.User{UserCookie: c.UserCookie{Username: username}}, true
+	user, ok := users[username]
+	return &user, ok
 }
 
 func (l Local) AddUser(user c.User) bool {
+	users[user.Username] = user
 	return true
 }
 
@@ -81,4 +51,9 @@ func (l Local) DecrementUserUploadCount(userId int) bool {
 
 func (l Local) RefreshUserUploadCount(userId int, newCount int) bool {
 	return true
+}
+
+func init() {
+	links = make(map[string]c.Link)
+	users = make(map[string]c.User)
 }

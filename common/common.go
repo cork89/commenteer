@@ -67,6 +67,33 @@ const (
 	UserCtx HttpContext = "UserCtx"
 )
 
+type Clock interface {
+	Now() time.Time
+}
+
+type RealClock struct{}
+
+func (RealClock) Now() time.Time {
+	return time.Now()
+}
+
 func (req RedditRequest) AsString() string {
 	return fmt.Sprintf("%s-%s-%s", req.Subreddit, req.Article, req.Comment)
+}
+
+func (link Link) AsString() string {
+	return fmt.Sprintf("Image Url: %s\nProxy Url: %s\nLinkType: %s\nCdnUrl: %s\nUserId: %d\nRedditComments:%s\n", link.ImageUrl, link.ProxyUrl, link.LinkType, link.CdnUrl, link.UserId, prettyPrintComments(link.RedditComments))
+}
+
+func (c Comment) AsString() string {
+	return fmt.Sprintf("\tComment: %s\n\tUser: %s\n", c.Comment, c.Author)
+}
+
+func prettyPrintComments(cmts []Comment) string {
+	final := "[\n"
+	for _, cmt := range cmts {
+		final += cmt.AsString()
+	}
+	final += "]"
+	return final
 }

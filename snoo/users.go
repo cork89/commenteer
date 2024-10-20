@@ -22,7 +22,6 @@ var redditRedirectUri string
 var redditClientId string
 var redditSecret string
 var redditBasicAuth string
-var redditJWTSecret string
 var RedditAuthUrl string
 
 var client http.Client
@@ -55,19 +54,34 @@ const (
 	cookieName string = "commenteerCookie"
 )
 
+var clock common.Clock = common.RealClock{}
+
+type RedditAuthCaller interface {
+	callAccessTokenApi(PostBody) (*http.Response, error)
+	callRefreshAccessTokenApi(PostBody) (*http.Response, error)
+}
+
+type RealRedditAuthCaller struct{}
+
+var authCaller RedditAuthCaller = RealRedditAuthCaller{}
+
 func (atb AccessTokenBody) GetExpireDtTm() time.Time {
-	return time.Now().UTC().Add(time.Second * time.Duration(atb.ExpiresIn))
+	return clock.Now().UTC().Add(time.Second * time.Duration(atb.ExpiresIn))
 }
 
 func CreateUserJwt(user common.UserCookie) string {
-	key := []byte(redditJWTSecret)
+	key := []byte(os.Getenv("REDDIT_JWT_SECRET"))
+
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {
 		log.Printf("failed to create jwt signer: %v\n", err)
 	}
-
+	fmt.Println(clock.Now())
+	fmt.Println(clock.Now().UTC())
+	tm := clock.Now().UTC().Add(time.Hour * time.Duration(24))
+	fmt.Println(tm.Unix())
 	claims := &jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * time.Duration(24))),
+		ExpiresAt: jwt.NewNumericDate(tm),
 		Subject:   user.Username,
 	}
 
@@ -103,7 +117,7 @@ func GetUserCookie(r *http.Request) (userCookie *common.User, ok bool) {
 		return nil, false
 	}
 
-	key := []byte(redditJWTSecret)
+	key := []byte(os.Getenv("REDDIT_JWT_SECRET"))
 	verifier, err := jwt.NewVerifierHS(jwt.HS256, key)
 	if err != nil {
 		log.Printf("failed to create jwt verifier: %v\n", err)
@@ -165,7 +179,7 @@ func GetUserData(accessToken AccessTokenBody) (user common.User) {
 	return user
 }
 
-func callRefreshAccessTokenApi(postBody PostBody) (*http.Response, error) {
+func (RealRedditAuthCaller) callRefreshAccessTokenApi(postBody PostBody) (*http.Response, error) {
 	data := url.Values{}
 	data.Set("grant_type", postBody.GrantType)
 	data.Set("refresh_token", postBody.RefreshToken)
@@ -182,7 +196,7 @@ func callRefreshAccessTokenApi(postBody PostBody) (*http.Response, error) {
 	return client.Do(req)
 }
 
-func callAccessTokenApi(postBody PostBody) (*http.Response, error) {
+func (RealRedditAuthCaller) callAccessTokenApi(postBody PostBody) (*http.Response, error) {
 	data := url.Values{}
 	data.Set("grant_type", postBody.GrantType)
 	data.Set("code", postBody.Code)
@@ -201,7 +215,7 @@ func callAccessTokenApi(postBody PostBody) (*http.Response, error) {
 }
 
 func GetRedditAccessToken(state string, code string) (accessToken *AccessTokenBody, ok bool) {
-	if state != redditOAuthState {
+	if state != os.Getenv("REDDIT_OAUTH_STATE") {
 		log.Println("wrong state :(")
 	}
 
@@ -209,15 +223,13 @@ func GetRedditAccessToken(state string, code string) (accessToken *AccessTokenBo
 		log.Println("no code bro")
 	}
 
-	log.Printf("state: %s, code: %s\n", state, code)
-
 	body := PostBody{
 		GrantType:   "authorization_code",
 		Code:        code,
 		RedirectUri: redditRedirectUri,
 	}
 
-	res, err := callAccessTokenApi(body)
+	res, err := authCaller.callAccessTokenApi(body)
 	if err != nil {
 		log.Println("failed to get access token ", err)
 		return nil, false
@@ -240,8 +252,6 @@ func GetRedditAccessToken(state string, code string) (accessToken *AccessTokenBo
 		log.Println("error unmarshalling response")
 		return nil, false
 	}
-
-	log.Printf("accessToken: %v\n", accessToken)
 	return accessToken, true
 }
 
@@ -252,7 +262,7 @@ func RefreshRedditAccessToken(user *common.User) (*common.User, bool) {
 		RefreshToken: user.RefreshToken,
 	}
 
-	res, err := callRefreshAccessTokenApi(body)
+	res, err := authCaller.callRefreshAccessTokenApi(body)
 	if err != nil {
 		log.Println("failed to get access token ", err)
 		return user, false
@@ -269,7 +279,6 @@ func RefreshRedditAccessToken(user *common.User) (*common.User, bool) {
 		log.Println("failed to read response body")
 		return user, false
 	}
-	log.Printf("resBody: %s\n", resBody)
 
 	err = json.Unmarshal(resBody, &accessToken)
 	if err != nil {
@@ -309,7 +318,6 @@ func init() {
 	redditRedirectUri = os.Getenv("REDDIT_REDIRECT_URI")
 	redditClientId = os.Getenv("REDDIT_CLIENT_ID")
 	redditSecret = os.Getenv("REDDIT_SECRET")
-	redditJWTSecret = os.Getenv("REDDIT_JWT_SECRET")
 
 	RedditAuthUrl = fmt.Sprintf("https://www.reddit.com/api/v1/authorize?client_id=%s&response_type=code&state=%s&redirect_uri=%s&duration=permanent&scope=read,identity", redditClientId, redditOAuthState, redditRedirectUri)
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"log/slog"
 	c "main/common"
+	"main/dataaccess"
 	d "main/dataaccess"
 	"main/middleware"
 	"main/snoo"
@@ -19,7 +20,7 @@ import (
 
 var tmpl map[string]*template.Template
 
-var validPathValue = regexp.MustCompile("^[a-zA-Z0-9]+-[a-zA-Z0-9]{7}-[a-zA-Z0-9]{7}$")
+var validPathValue = regexp.MustCompile("^[a-zA-Z0-9_]+-[a-zA-Z0-9]{7}-[a-zA-Z0-9]{7}$")
 
 func extractRedditRequest(r *http.Request) (*c.RedditRequest, error) {
 	m := validPathValue.FindStringSubmatch(r.PathValue("id"))
@@ -66,7 +67,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cdnUrl := fmt.Sprintf("%s/%s.%s", s.CdnBaseUrl, redditRequest.AsString(), imageType)
-	d.UpdateCdnUrl(*redditRequest, cdnUrl)
+	go d.UpdateCdnUrl(*redditRequest, cdnUrl)
 	go snoo.DecrementUserUploadCount(user)
 
 	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusSeeOther)
@@ -202,6 +203,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// snoo.Main()
+	dataaccess.Initialize("")
+
 	tmpl = make(map[string]*template.Template)
 	tmpl["home"] = template.Must(template.ParseFiles("static/home.html", "static/base.html"))
 	tmpl["edit"] = template.Must(template.ParseFiles("static/edit.html", "static/base.html"))

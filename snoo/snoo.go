@@ -37,8 +37,6 @@ type RedditCaller interface {
 
 type RealRedditCaller struct{}
 
-type FakeRedditCaller struct{}
-
 func parseCommentData(data map[string]interface{}, comments []c.Comment, commentId string, depth int) []c.Comment {
 	log.Printf("Entering ParseCommentData, depth: %d", depth)
 	comment := c.Comment{Comment: data["body"].(string), Author: data["author"].(string)}
@@ -94,36 +92,6 @@ func parseJsonData(data []map[string]interface{}, commentId string) *c.Link {
 	return &c.Link{ImageUrl: imageUrl, RedditComments: comments, LinkType: linkType}
 }
 
-func (f FakeRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link *c.Link, err error) {
-	link, ok := dataaccess.GetLink(req)
-	if ok {
-		return link, nil
-	}
-
-	body, err := os.ReadFile("./static/test4.json")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	jsonData := make(JsonData, 2)
-	for i := range jsonData {
-		jsonData[i] = make(map[string]interface{})
-	}
-
-	err = json.Unmarshal(body, &jsonData)
-	if err != nil {
-		log.Printf("error unmarshalling: %s\n", err)
-	}
-	link = parseJsonData(jsonData, req.Comment)
-	link.ProxyUrl, err = GetImgProxyUrl(link.ImageUrl)
-	if err != nil {
-		return CreateErrorLink(), nil
-	}
-	// go addToCache(req, link)
-	dataaccess.AddLink(req, link, user.UserId)
-	return link, nil
-}
-
 func parseApiResponse(res *http.Response, req c.RedditRequest, user *c.User) (link *c.Link, err error) {
 	log.Println("Entering ParseApiResponse")
 	log.Println(res.StatusCode)
@@ -151,7 +119,7 @@ func parseApiResponse(res *http.Response, req c.RedditRequest, user *c.User) (li
 			return CreateErrorLink(), nil
 		}
 		// go addToCache(req, link)
-		dataaccess.AddLink(req, link, user.UserId)
+		go dataaccess.AddLink(req, link, user.UserId)
 		log.Println("Leaving ParseApiResponse")
 		return link, nil
 	}
@@ -252,15 +220,13 @@ func init() {
 		log.Println(err)
 	}
 
+	dataAccessType := os.Getenv("DATA_ACCESS_TYPE")
+	dataaccess.Initialize(dataAccessType)
+
 	redditAccessToken = os.Getenv("REDDIT_ACCESS_TOKEN")
 	CdnBaseUrl = os.Getenv("R2_DEV_URL")
 
-	redditFake := os.Getenv("REDDIT_FAKE")
-	if redditFake == "1" {
-		redditCaller = &FakeRedditCaller{}
-	} else {
-		redditCaller = &RealRedditCaller{}
-	}
+	redditCaller = &RealRedditCaller{}
 
 	// linkCache = make(map[c.RedditRequest]c.Link)
 	// go populateCache()

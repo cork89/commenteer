@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.18
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.61.2
 	github.com/cristalhq/jwt/v5 v5.4.0
+	github.com/google/go-cmp v0.6.0
 	github.com/jackc/pgx/v5 v5.7.0
 	github.com/joho/godotenv v1.5.1
 )
