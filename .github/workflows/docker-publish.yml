@@ -1,4 +1,4 @@
-name: Docker
+name: deploy
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -23,8 +23,11 @@ env:
 
 
 jobs:
+  tests:
+    uses: ./.github/workflows/build.yml
   build:
-
+    name: build
+    needs: [tests]
     runs-on: ubuntu-latest
     permissions:
       contents: read
