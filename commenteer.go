@@ -209,7 +209,6 @@ func main() {
 	tmpl["home"] = template.Must(template.ParseFiles("static/home.html", "static/base.html"))
 	tmpl["edit"] = template.Must(template.ParseFiles("static/edit.html", "static/base.html"))
 	tmpl["view"] = template.Must(template.ParseFiles("static/view.html", "static/base.html"))
-	tmpl["comments"] = template.Must(template.ParseFiles("static/comments.html", "static/base.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
 
 	router := http.NewServeMux()
