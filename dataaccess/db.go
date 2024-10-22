@@ -204,7 +204,8 @@ func init() {
 	postgresHost := os.Getenv("POSTGRES_HOST")
 	postgresPort := os.Getenv("POSTGRES_PORT")
 	postgresDb := os.Getenv("POSTGRES_DB")
+	postgresOpt := os.Getenv("POSTGRES_OPT")
 
-	postgresUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", postgresUser, postgresPw, postgresHost, postgresPort, postgresDb)
+	postgresUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", postgresUser, postgresPw, postgresHost, postgresPort, postgresDb, postgresOpt)
 	getConnection(postgresUrl)
 }
