@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     refresh_expire_dt_tm timestamp without time zone,
     icon_url character varying(220),
     access_token text,
-    remaining_uploads integer NOT NULL DEFAULT 10
+    remaining_uploads integer NOT NULL DEFAULT 10,
+    upload_refresh_dt_tm timestamp without time zone NOT NULL DEFAULT (now() + '7 days'::interval)
 );
 
 --
@@ -46,3 +47,8 @@ CREATE TABLE IF NOT EXISTS public.comments (
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
+
+---- create above / drop below ----
+
+-- Write your migrate down statements here. If this migration is irreversible
+-- Then delete the separator line above.

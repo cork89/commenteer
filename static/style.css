@@ -43,6 +43,10 @@ body {
     margin-bottom: 1rem;
 }
 
+.container img {
+    width: 800px;
+}
+
 .image-comment-container {
     border: 2px solid rgb(128, 128, 172);
     border-radius: 5px;
