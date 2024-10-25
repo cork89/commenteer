@@ -35,6 +35,14 @@ body {
     margin: 0.5rem;
 }
 
+.container .login-icon {
+    width: 32px;
+}
+
+.container button {
+    display: flex;
+}
+
 .container {
     display: flex;
     justify-content: center;
@@ -181,6 +189,12 @@ ul>li.comment {
     background-color: white;
     border-radius: 50%;
     vertical-align: middle;
+}
+
+.user button {
+    display: inline-block;
+    vertical-align: middle;
+    margin-top: 1em;
 }
 
 .titlebar {

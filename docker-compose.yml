@@ -2,7 +2,7 @@ name: commenteer
 
 services:
   app:
-    image: cork89/commenteer-app:latest
+    image: ghcr.io/cork89/commenteer:main
     container_name: commenteer
     ports:
       - "8090:8090"

@@ -96,7 +96,7 @@ func GetImgProxyUrl(src string) (string, error) {
 	imgProxyKey := os.Getenv("IMGPROXY_KEY")
 
 	// res, err := http.Get("http://" + imgproxy + ":8080/preset:sharp/resize:fit:700/plain/https://i.redd.it/b7zui0ibi3p91.jpg@jpg")
-	args := fmt.Sprintf("/resize:fit:%d:0:1/padding:0:%d/wm:1:soea:0:0:0.5/background:255:255:255/plain/%s", imgOpts.dstX, imgOpts.padX, src)
+	args := fmt.Sprintf("/resize:fit:%d:0:1/padding:0:%d/wm:1:soea:0:0:0.3/background:255:255:255/plain/%s", imgOpts.dstX, imgOpts.padX, src)
 
 	rslt, err := computeHMACSHA256(fmt.Sprintf("%s%s", imgProxySalt, args), imgProxyKey)
 

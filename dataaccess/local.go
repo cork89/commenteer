@@ -10,8 +10,8 @@ type Local struct{}
 var links map[string]c.Link
 var users map[string]c.User
 
-func (l Local) GetRecentLinks(page int) map[string]c.Link {
-	return links
+func (l Local) GetRecentLinks(page int) []c.Link {
+	return make([]c.Link, 0)
 }
 
 func (l Local) GetLinks() map[string]c.Link {

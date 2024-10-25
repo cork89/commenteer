@@ -51,7 +51,7 @@ type UserResponse struct {
 }
 
 const (
-	cookieName string = "commenteerCookie"
+	CookieName string = "commenteerCookie"
 )
 
 var clock common.Clock = common.RealClock{}
@@ -98,7 +98,7 @@ func CreateUserCookie(userCookie common.UserCookie) http.Cookie {
 	jwt := CreateUserJwt(userCookie)
 
 	cookie := http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    jwt,
 		Path:     "/",
 		MaxAge:   int(time.Duration(2160 * time.Hour).Seconds()),
@@ -111,7 +111,7 @@ func CreateUserCookie(userCookie common.UserCookie) http.Cookie {
 }
 
 func GetUserCookie(r *http.Request) (userCookie *common.User, ok bool) {
-	cookie, err := r.Cookie(cookieName)
+	cookie, err := r.Cookie(CookieName)
 	if err != nil {
 		log.Printf("No cookie found, %v\n", err)
 		return nil, false

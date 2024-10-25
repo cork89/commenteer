@@ -10,6 +10,9 @@
         {{if .UserCookie}}
         <p>{{.Username}}</p>
         <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
+        <form action="/logout/" method="post">
+            <button type="submit">logout</button>
+        </form>
         {{else}}
         <a href="/login/"><button>Login</button></a>
     </div>
@@ -27,7 +30,7 @@
     </div>
 </div>
 {{end}}
-{{range $key, $value := .Posts}}
+{{range .Posts}}
 <div class="container">
     <img src="{{.CdnUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
 

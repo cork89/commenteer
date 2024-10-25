@@ -122,7 +122,10 @@ func TestNewLink_Returned(t *testing.T) {
 	cmt2 := c.Comment{Comment: "Go read the replies to FuckJerry’s Instagram announcing Swift is voting for Harris. Every reply is “people who care about who celebs vote for are losers”", Author: "Chessh2036"}
 	cmt3 := c.Comment{Comment: "Weird for a group that seems to care a lot about what Kevin Sorbo and Kid Rock thinks, even though I never hear about them anymore otherwise.", Author: "mtaw"}
 	cmts := []c.Comment{cmt1, cmt2, cmt3}
-	want := &c.Link{RedditComments: cmts, ImageUrl: "https://i.redd.it/h2y07ob2m3od1.png", LinkType: c.Image, ProxyUrl: "http://example.com/EEE_EwE1hWgnFFxUgvBC7Wrd8GqA1yR8Z5lUVjp_YuA/resize:fit:1024:0:1/padding:0:0/wm:1:soea:0:0:0.5/background:255:255:255/plain/https://i.redd.it/h2y07ob2m3od1.png"}
+	want := &c.Link{RedditComments: cmts,
+		ImageUrl: "https://i.redd.it/h2y07ob2m3od1.png",
+		LinkType: c.Image,
+		ProxyUrl: "http://example.com/PumR_I8gs1jSB2qPlMwOIOxiD635pZC-YfKV85RbnZo/resize:fit:1024:0:1/padding:0:0/wm:1:soea:0:0:0.3/background:255:255:255/plain/https://i.redd.it/h2y07ob2m3od1.png"}
 	user := &c.User{UserId: userId}
 
 	dataaccess.Initialize("local")
@@ -144,7 +147,7 @@ func TestNewLink_SavedToDataAccess(t *testing.T) {
 	cmt2 := c.Comment{Comment: "Go read the replies to FuckJerry’s Instagram announcing Swift is voting for Harris. Every reply is “people who care about who celebs vote for are losers”", Author: "Chessh2036"}
 	cmt3 := c.Comment{Comment: "Weird for a group that seems to care a lot about what Kevin Sorbo and Kid Rock thinks, even though I never hear about them anymore otherwise.", Author: "mtaw"}
 	cmts := []c.Comment{cmt1, cmt2, cmt3}
-	want := &c.Link{RedditComments: cmts, ImageUrl: "https://i.redd.it/h2y07ob2m3od1.png", LinkType: c.Image, ProxyUrl: "http://example.com/EEE_EwE1hWgnFFxUgvBC7Wrd8GqA1yR8Z5lUVjp_YuA/resize:fit:1024:0:1/padding:0:0/wm:1:soea:0:0:0.5/background:255:255:255/plain/https://i.redd.it/h2y07ob2m3od1.png"}
+	want := &c.Link{RedditComments: cmts, ImageUrl: "https://i.redd.it/h2y07ob2m3od1.png", LinkType: c.Image, ProxyUrl: "http://example.com/PumR_I8gs1jSB2qPlMwOIOxiD635pZC-YfKV85RbnZo/resize:fit:1024:0:1/padding:0:0/wm:1:soea:0:0:0.3/background:255:255:255/plain/https://i.redd.it/h2y07ob2m3od1.png"}
 	user := &c.User{UserId: userId}
 
 	dataaccess.Initialize("local")
@@ -165,7 +168,7 @@ func TestGetImgProxy(t *testing.T) {
 	t.Setenv("IMGPROXY_SALT", "salt")
 	t.Setenv("IMGPROXY_KEY", "key")
 
-	want := "http://example.com/4Kymlr9EvBzkC-KlnbBh9q39W7XEJ13c4UD8ZvxzB14/resize:fit:1024:0:1/padding:0:0/wm:1:soea:0:0:0.5/background:255:255:255/plain/example.jpg"
+	want := "http://example.com/A0d0zvq27NeMDFzrS5pw5mAEkCpEljha_eQjnsyr-6E/resize:fit:1024:0:1/padding:0:0/wm:1:soea:0:0:0.3/background:255:255:255/plain/example.jpg"
 
 	url, err := GetImgProxyUrl("example.jpg")
 
@@ -197,7 +200,7 @@ func TestCreateUserCookie(t *testing.T) {
 	jwt := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzI5NDY4ODAwfQ.o6g35x0DLhID8hLzn9DmUQa_2ZQOob2h9-QgG2yaEy8"
 
 	want := http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    jwt,
 		Path:     "/",
 		MaxAge:   int(time.Duration(2160 * time.Hour).Seconds()),
@@ -232,7 +235,7 @@ func TestGetUserCookie_CookieParseFailure_BadFormat(t *testing.T) {
 	jwt := "badformat"
 
 	wantCookie := http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    jwt,
 		Path:     "/",
 		MaxAge:   int(time.Duration(2160 * time.Hour).Seconds()),
@@ -259,7 +262,7 @@ func TestGetUserCookie_CookieParseFailure_Badjwt(t *testing.T) {
 	jwt := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzI5NDY4ODAwfQ.o6g35x0DLhID8hLzn9DmUQa_2ZQOob2h9-QgG2yaEyf"
 
 	wantCookie := http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    jwt,
 		Path:     "/",
 		MaxAge:   int(time.Duration(2160 * time.Hour).Seconds()),
@@ -288,7 +291,7 @@ func TestGetUserCookie_CookieDataAccess_NoUserFound(t *testing.T) {
 	jwt := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzI5NDY4ODAwfQ.o6g35x0DLhID8hLzn9DmUQa_2ZQOob2h9-QgG2yaEy8"
 
 	wantCookie := http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    jwt,
 		Path:     "/",
 		MaxAge:   int(time.Duration(2160 * time.Hour).Seconds()),
@@ -317,7 +320,7 @@ func TestGetUserCookie_CookieDataAccess_UserFound(t *testing.T) {
 	jwt := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzI5NDY4ODAwfQ.o6g35x0DLhID8hLzn9DmUQa_2ZQOob2h9-QgG2yaEy8"
 
 	wantCookie := http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    jwt,
 		Path:     "/",
 		MaxAge:   int(time.Duration(2160 * time.Hour).Seconds()),

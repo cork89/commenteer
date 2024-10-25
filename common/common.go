@@ -52,7 +52,7 @@ type User struct {
 
 type HomeData struct {
 	*UserCookie
-	Posts map[string]Link
+	Posts []Link
 }
 
 type SingleLinkData struct {

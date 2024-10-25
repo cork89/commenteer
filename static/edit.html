@@ -13,6 +13,9 @@
         {{if .UserCookie}}
         <p>{{.Username}}</p>
         <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
+        <form action="/logout/" method="post">
+            <button type="submit">logout</button>
+        </form>
         {{end}}
     </div>
 </nav>

@@ -135,8 +135,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	var homeData c.HomeData
-	currentPosts := d.GetRecentLinks(1)
-	homeData.Posts = currentPosts
+	homeData.Posts = d.GetRecentLinks(1)
 
 	user, ok := s.GetUserCookie(r)
 	if ok {
@@ -201,6 +200,22 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("logging out")
+	c := &http.Cookie{
+		Name:     s.CookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, c)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func main() {
 	// snoo.Main()
 	dataaccess.Initialize("")
@@ -222,6 +237,7 @@ func main() {
 	loggedInRouter.HandleFunc("GET /r/{id}/submit/", editHandler)
 	loggedInRouter.HandleFunc("POST /r/{id}/submit/", saveHandler)
 	router.HandleFunc("/r/{id}/", viewHandler)
+	router.HandleFunc("POST /logout/", logoutHandler)
 
 	stack := middleware.CreateStack(
 		middleware.Logging,
