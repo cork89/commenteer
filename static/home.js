@@ -40,7 +40,7 @@ async function copyImage(event) {
 
         // let imgData = sessionStorage.getItem(imgId);
         // if (!imgBlob) {
-        const imgData = await fetch(`http://localhost:8090/image/?src=${img}`, {
+        const imgData = await fetch(`https://commenteer.dev/image/?src=${img}`, {
             mode: "no-cors",
             headers: {
                 "Access-Control-Allow-Origin": "*",
