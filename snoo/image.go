@@ -78,6 +78,25 @@ func resizeImageTODO(img string) ImgOpts {
 	return ImgOpts{dstX: dstX, dstY: dstY, padX: padX}
 }
 
+func ConvertImageToPng(src string) string {
+	// imgOpts := resizeImage()
+	imgproxy := os.Getenv("IMGPROXY_URL")
+	imgProxySalt := os.Getenv("IMGPROXY_SALT")
+	imgProxyKey := os.Getenv("IMGPROXY_KEY")
+
+	args := fmt.Sprintf("/plain/%s@png", src)
+
+	rslt, err := computeHMACSHA256(fmt.Sprintf("%s%s", imgProxySalt, args), imgProxyKey)
+
+	if err != nil {
+		return ""
+	}
+
+	base64 := base64.RawURLEncoding.EncodeToString(rslt)
+
+	return fmt.Sprintf("http://%s/%s%s", imgproxy, base64, args)
+}
+
 func computeHMACSHA256(url string, key string) ([]byte, error) {
 	h := hmac.New(sha256.New, []byte(key))
 

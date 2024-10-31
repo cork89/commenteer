@@ -118,6 +118,7 @@ func parseApiResponse(res *http.Response, req c.RedditRequest, user *c.User) (li
 		if err != nil {
 			return CreateErrorLink(), nil
 		}
+		link.UserId = user.UserId
 		// go addToCache(req, link)
 		go dataaccess.AddLink(req, link, user.UserId)
 		log.Println("Leaving ParseApiResponse")
@@ -130,14 +131,10 @@ func parseApiResponse(res *http.Response, req c.RedditRequest, user *c.User) (li
 func (r RealRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link *c.Link, err error) {
 	link, ok := dataaccess.GetLink(req)
 	if ok {
-		if link.UserId == user.UserId {
-			log.Printf("Pulled from db: %s", req.AsString())
-			link.ProxyUrl, err = GetImgProxyUrl(link.ImageUrl)
-			log.Println(link)
-			return link, err
-		} else {
-			return nil, fmt.Errorf("trying to access a post that isn't yours, user: %d", user.UserId)
-		}
+		log.Printf("Pulled from db: %s", req.AsString())
+		link.ProxyUrl, err = GetImgProxyUrl(link.ImageUrl)
+		log.Println(link)
+		return link, err
 	}
 
 	log.Printf("request: %s\n", req)

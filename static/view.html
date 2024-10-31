@@ -2,22 +2,11 @@
 <title>Commenteer - {{.RedditRequest}}</title>
 {{end}}
 
-{{define "nav"}}
-<nav class="titlebar">
-    <a href="/" class="nostyle"><img class="logo" src="/static/cmtr.webp"></a>
-    <div class="user">
-        {{if .UserCookie}}
-        <p>{{.Username}}</p>
-        <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
-        {{else}}
-        <a href="/login/"><button>Login</button></a>
-        {{end}}
-    </div>
-</nav>
-{{end}}
-
 {{define "body"}}
-<div class="container">
-    <img src="{{.CdnUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
+<div class="flex justify-center">
+    <div class="pt-20">
+        <img class="shadow-md" id="{{.QueryId}}" src="{{.CdnUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
+        {{template "linkActions" .}}    
+    </div>
 </div>
 {{end}}

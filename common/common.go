@@ -26,6 +26,7 @@ type Link struct {
 	LinkType       Base
 	CdnUrl         string
 	UserId         int
+	QueryId        string
 }
 
 type Comment struct {

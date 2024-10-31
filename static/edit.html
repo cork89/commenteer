@@ -22,21 +22,31 @@
 {{end}}
 
 {{define "body"}}
-<div class="container">
-    <button onclick="takeScreenshot();">Finalize</button>
-</div>
-<div class="container">
-    <div class="image-comment-container">
-        <div class="image-container">
-            <img src="{{.ProxyUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
+<div class="flex align-items justify-center">
+    <div class="mt-20 max-w-full">
+        <!-- <div class="container"> -->
+        <div class="image-comment-container border-2 border-solid border-slate-500">
+            <div class="image-container">
+                <img src="{{.ProxyUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
+            </div>
+            <div class="comment-container mt-4 ml-4">
+                {{range $i, $comment := .RedditComments}}
+                {{ if gt $i 0 }}
+                <ul class="d{{$i}} w-11/12 ml-auto">
+                    {{else}}
+                    <ul class="d{{$i}} w-11/12 ml-2">
+                        {{end}}
+                        <li class="comment">{{$comment.Comment}}</li>
+                        <li class="author">u/{{$comment.Author}}</li>
+                        {{end}}
+                    </ul>
+            </div>
         </div>
-        <div class="comment-container">
-            {{range $i, $comment := .RedditComments}}
-            <ul class="d{{$i}}">
-                <li class="comment">{{$comment.Comment}}</li>
-                <li class="author">u/{{$comment.Author}}</li>
-                {{end}}
-            </ul>
+        <!-- </div> -->
+        <div
+            class=" flex justify-end bg-white border-2 border-solid border-slate-500 rounded-md shadow-sm mb-6 mt-1 pl-2 py-2 max-w-screen-lg">
+            <button class="mr-2 bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+                onclick="takeScreenshot();">Publish</button>
         </div>
     </div>
 </div>

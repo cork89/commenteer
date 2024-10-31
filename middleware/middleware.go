@@ -115,3 +115,16 @@ func CacheControl(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func StaticMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/static/") {
+			// Call the next handler to process other routes
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.ServeFile(w, r, r.URL.Path[9:])
+		next.ServeHTTP(w, r)
+	})
+}

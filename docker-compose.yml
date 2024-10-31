@@ -22,7 +22,7 @@ services:
       - app-network
     environment:
       - IMGPROXY_ALLOW_ORIGIN=*
-      - IMGPROXY_ALLOWED_SOURCES=https://*.reddit.com/,https://i.redd.it/,https://i.imgur.com/,https://b.thumbs.redditmedia.com/
+      - IMGPROXY_ALLOWED_SOURCES=https://*.reddit.com/,https://i.redd.it/,https://i.imgur.com/,https://b.thumbs.redditmedia.com/,https://pub-593a43bc7b42437089b8412f046d013b.r2.dev
       - IMGPROXY_WATERMARK_URL=https://pub-593a43bc7b42437089b8412f046d013b.r2.dev/madewith2.webp
       - IMGPROXY_KEY=${IMGPROXY_KEY_HEX}
       - IMGPROXY_SALT=${IMGPROXY_SALT_HEX}

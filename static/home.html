@@ -4,48 +4,35 @@
 {{end}}
 
 {{define "nav"}}
-<nav class="titlebar">
-    <a href="/" class="nostyle"><img class="logo" src="/static/cmtr.webp" alt="commenteer logo"></a>
-    <div class="user">
-        {{if .UserCookie}}
-        <p>{{.Username}}</p>
-        <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
-        <form action="/logout/" method="post">
-            <button type="submit">logout</button>
-        </form>
-        {{else}}
-        <a href="/login/"><button>Login</button></a>
-    </div>
-    {{end}}
-</nav>
+
 {{end}}
 
 {{define "body"}}
-{{if .UserCookie}}
-<div class="container linker">
-    <input id="link" placeholder="https://www.reddit.com/r/pics/comments/1fvmr1o/a_picture_on_my_way_home/lq87zcb/"/>
-    <button onclick="validateLink();">Create</button>
-    <div>
-        <p id="linkError"></p>
+<div class="flex justify-center items-center flex-wrap pt-20">
+    {{if .UserCookie}}
+    <div class="mb-4" style="width: 866px;">
+        <!-- <form method="get"> -->
+            <input class="p-3 w-10/12 rounded-md shadow-md" id="link" type="url"
+                placeholder="https://www.reddit.com/r/pics/comments/1fvmr1o/a_picture_on_my_way_home/lq87zcb/" />
+            <button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+                onclick="validateLink();">create</button>
+        <!-- </form> -->
+        <div>
+            <p id="linkError"></p>
+        </div>
     </div>
+    {{end}}
+    {{range $i, $a := .Posts}}
+    <div class="">
+        <a href="/r/{{.QueryId}}">
+            {{ if gt $i 1 }}
+            <img class="shadow-md" id="{{.QueryId}}" src="{{.CdnUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
+            {{else}}
+            <img class="shadow-md" id="{{.QueryId}}" src="{{.CdnUrl}}" alt="{{.ImageUrl}}" />
+            {{end}}
+        </a>
+        {{template "linkActions" .}}
+    </div>
+    {{end}}
 </div>
-{{end}}
-{{range .Posts}}
-<div class="container">
-    <img src="{{.CdnUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
-
-    <!-- <div class="image-comment-container">
-        <div class="image-container">
-        </div> -->
-    <!-- <div class="comment-container">
-            {{range $i, $comment := .RedditComments}}
-            <ul class="d{{$i}}">
-                <li class="comment">{{$comment.Comment}}</li>
-                <li class="author">u/{{$comment.Author}}</li>
-                {{end}}
-            </ul>
-        </div> -->
-    <!-- </div> -->
-</div>
-{{end}}
 {{end}}

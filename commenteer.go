@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	c "main/common"
@@ -94,6 +95,12 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		go s.GetRedditDetails(*redditRequest, link, user)
 		data = <-link
 	}
+	if data.UserId != user.UserId {
+		log.Printf("data.UserId: %d, user.UserId: %d", data.UserId, user.UserId)
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	singleLinkData.Link = data
 
 	singleLinkData.UserCookie = &user.UserCookie
@@ -129,7 +136,6 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	singleLinkData.RedditRequest = redditRequest.AsString()
 
 	// user, _ := s.GetUserCookie(r)
-
 	tmpl["view"].ExecuteTemplate(w, "base", singleLinkData)
 }
 
@@ -150,9 +156,6 @@ func loginPostHandler(w http.ResponseWriter, r *http.Request) {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	test := "hello world"
-	fmt.Println(r.Header)
-	fmt.Println(r.Body)
-	fmt.Println(r.URL.Query())
 	queryParams := r.URL.Query()
 
 	state := queryParams.Get("state")
@@ -216,14 +219,43 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+func imageHandler(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	srcImg := queryParams.Get("src")
+
+	if srcImg == "" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	destImgUrl := s.ConvertImageToPng(srcImg)
+
+	destImg, err := http.Get(destImgUrl)
+	if err != nil {
+		fmt.Fprintf(w, "Error %d", err)
+		return
+	}
+	defer destImg.Body.Close()
+
+	w.Header().Set("Content-Length", fmt.Sprint(destImg.ContentLength))
+	w.Header().Set("Content-Type", destImg.Header.Get("Content-Type"))
+	if _, err = io.Copy(w, destImg.Body); err != nil {
+		fmt.Fprintf(w, "Error %d", err)
+		return
+	}
+
+	// buffer := make([]byte, destImg.ContentLength)
+	// destImg.Body.Read(buffer)
+	// http.ServeContent(w, r, "test", time.Now(), strings.NewReader(destImg))
+}
+
 func main() {
-	// snoo.Main()
 	dataaccess.Initialize("")
 
 	tmpl = make(map[string]*template.Template)
-	tmpl["home"] = template.Must(template.ParseFiles("static/home.html", "static/base.html"))
+	tmpl["home"] = template.Must(template.ParseFiles("static/home.html", "static/base.html", "static/linkActions.html"))
 	tmpl["edit"] = template.Must(template.ParseFiles("static/edit.html", "static/base.html"))
-	tmpl["view"] = template.Must(template.ParseFiles("static/view.html", "static/base.html"))
+	tmpl["view"] = template.Must(template.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
 
 	router := http.NewServeMux()
@@ -238,6 +270,10 @@ func main() {
 	loggedInRouter.HandleFunc("POST /r/{id}/submit/", saveHandler)
 	router.HandleFunc("/r/{id}/", viewHandler)
 	router.HandleFunc("POST /logout/", logoutHandler)
+	router.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/robots.txt")
+	})
+	router.HandleFunc("/image/", imageHandler)
 
 	stack := middleware.CreateStack(
 		middleware.Logging,

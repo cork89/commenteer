@@ -32,7 +32,7 @@ func getConnection(postgresUrl string) {
 func (d Db) GetRecentLinks(page int) (links []c.Link) {
 	offset := (page - 1) * 10
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.cdn_image_url, l.user_id, l.image_url
+SELECT l.cdn_image_url, l.user_id, l.image_url, l.query_id
 FROM links l
 WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`, offset)
 	// return handleRetrieve(rows, err)
@@ -41,7 +41,7 @@ WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`,
 	}
 	for rows.Next() {
 		var link c.Link
-		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl)
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
