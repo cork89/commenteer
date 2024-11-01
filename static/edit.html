@@ -7,18 +7,7 @@
 {{end}}
 
 {{define "nav"}}
-<nav class="titlebar">
-    <a href="/" class="nostyle"><img class="logo" src="/static/cmtr.webp"></a>
-    <div class="user">
-        {{if .UserCookie}}
-        <p>{{.Username}}</p>
-        <img src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
-        <form action="/logout/" method="post">
-            <button type="submit">logout</button>
-        </form>
-        {{end}}
-    </div>
-</nav>
+{{template "userLoginInfo" .}}
 {{end}}
 
 {{define "body"}}

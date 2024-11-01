@@ -8,30 +8,34 @@
     <meta name="description" content="commenteer allows users to share reddit images and comments">
     <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" href="/static/favicon.webp">
-    <script src="/static/tailwindcss.js"></script>
     {{template "head" .}}
 </head>
 
 <body>
-    <!-- <nav class="titlebar"> -->
     <nav class="fixed inset-x-0 top-0 z-10 bg-blue-300 flex mb-10">
         <div class="flex items-center justify-between w-full">
-            <a href="/" class=""><img class="logo" src="/static/cmtr2.webp" alt="commenteer logo"></a>
-            <div class="flex items-center gap-2 mr-4">
-                {{if .UserCookie}}
-                <p>{{.Username}}</p>
-                <img class="w-7 bg-white rounded-full" src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
-                <form action="/logout/" method="post">
-                    <button type="submit" class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded">logout</button>
-                </form>
-                {{else}}
-                <a href="/login/"><button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded">Login</button></a>
-            </div>
-            {{end}}
+            <a href="/"><img class="logo" src="/static/cmtr2.webp" alt="commenteer logo"></a>
+            {{ template "nav" .}}
         </div>
     </nav>
     {{template "body" .}}
 </body>
 
 </html>
+{{end}}
+
+{{ define "userLoginInfo" }}
+<div class="flex items-center gap-2 mr-4">
+    {{if .UserCookie}}
+    <p>{{.Username}}</p>
+    <img class="w-7 bg-white rounded-full" src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
+    <form action="/logout/" method="post">
+        <button type="submit"
+            class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded">logout</button>
+    </form>
+    {{else}}
+    <a href="/login/"><button
+            class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded">login</button></a>
+    {{end}}
+</div>
 {{end}}

@@ -1,3 +1,7 @@
 module.exports = {
-    content: ['./static/**.{html}']
+    content: ['./static/**/*.html'],
+    theme: {
+        extend: {},
+      },
+      plugins: [],
 }

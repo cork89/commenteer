@@ -14,9 +14,12 @@ import (
 	"main/snoo"
 	s "main/snoo"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/joho/godotenv"
 )
 
 var tmpl map[string]*template.Template
@@ -78,6 +81,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	var singleLinkData c.SingleLinkData
 
 	redditRequest, err := extractRedditRequest(r)
+
 	var data *c.Link
 
 	ctx := r.Context()
@@ -106,7 +110,9 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	singleLinkData.UserCookie = &user.UserCookie
 	singleLinkData.RedditRequest = redditRequest.AsString()
 
-	tmpl["edit"].ExecuteTemplate(w, "base", singleLinkData)
+	if err := tmpl["edit"].ExecuteTemplate(w, "base", singleLinkData); err != nil {
+		log.Printf("editHandler err: %v", err)
+	}
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
@@ -134,9 +140,12 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 
 	singleLinkData.Link = data
 	singleLinkData.RedditRequest = redditRequest.AsString()
+	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
 	// user, _ := s.GetUserCookie(r)
-	tmpl["view"].ExecuteTemplate(w, "base", singleLinkData)
+	if err = tmpl["view"].ExecuteTemplate(w, "base", singleLinkData); err != nil {
+		log.Printf("viewHandler err: %v", err)
+	}
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +156,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		homeData.UserCookie = &user.UserCookie
 	}
-	tmpl["home"].ExecuteTemplate(w, "base", homeData)
+	homeData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+
+	if err := tmpl["home"].ExecuteTemplate(w, "base", homeData); err != nil {
+		log.Printf("homeHandler err: %v", err)
+	}
 }
 
 func loginPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +168,6 @@ func loginPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	test := "hello world"
 	queryParams := r.URL.Query()
 
 	state := queryParams.Get("state")
@@ -164,13 +176,17 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	_, ok := s.GetUserCookie(r)
 	if !ok {
 		if state == "" || code == "" {
-			tmpl["login"].ExecuteTemplate(w, "base", test)
+			if err := tmpl["login"].ExecuteTemplate(w, "base", nil); err != nil {
+				log.Printf("loginHandler state/code err: %v", err)
+			}
 			return
 		}
 		accessToken, ok := s.GetRedditAccessToken(state, code)
 		if !ok {
-			test = "something went wrong :("
-			tmpl["login"].ExecuteTemplate(w, "base", test)
+			fmt.Println("something went wrong :(")
+			if err := tmpl["login"].ExecuteTemplate(w, "base", nil); err != nil {
+				log.Printf("loginHandler accesstoken err: %v", err)
+			}
 			return
 		}
 		userData := s.GetUserData(*accessToken)
@@ -178,8 +194,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			userAdded := d.AddUser(userData)
 			if !userAdded {
-				test = "something went wrong :("
-				tmpl["login"].ExecuteTemplate(w, "base", test)
+				fmt.Println("something went wrong :(")
+				if err := tmpl["login"].ExecuteTemplate(w, "base", nil); err != nil {
+					log.Printf("loginHandler adduser err: %v", err)
+				}
 				return
 			}
 		}
@@ -200,7 +218,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	// tmpl["home"].ExecuteTemplate(w, "base")
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -249,13 +267,27 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 	// http.ServeContent(w, r, "test", time.Now(), strings.NewReader(destImg))
 }
 
+func LinkWrap(commenteerUrl string, link c.Link) map[string]interface{} {
+	return map[string]interface{}{
+		"CommenteerUrl": commenteerUrl,
+		"Link":          link,
+	}
+}
+
 func main() {
 	dataaccess.Initialize("")
+	err := godotenv.Load("/run/secrets/.env.local")
+	if err != nil {
+		log.Println(err)
+	}
 
 	tmpl = make(map[string]*template.Template)
-	tmpl["home"] = template.Must(template.ParseFiles("static/home.html", "static/base.html", "static/linkActions.html"))
+
+	homeTemp := template.New("home").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
+	tmpl["home"] = template.Must(homeTemp.ParseFiles("static/home.html", "static/base.html", "static/linkActions.html"))
 	tmpl["edit"] = template.Must(template.ParseFiles("static/edit.html", "static/base.html"))
-	tmpl["view"] = template.Must(template.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html"))
+	viewTemp := template.New("view").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
+	tmpl["view"] = template.Must(viewTemp.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
 
 	router := http.NewServeMux()

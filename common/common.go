@@ -53,13 +53,15 @@ type User struct {
 
 type HomeData struct {
 	*UserCookie
-	Posts []Link
+	Posts         []Link
+	CommenteerUrl string
 }
 
 type SingleLinkData struct {
 	*UserCookie
 	*Link
 	RedditRequest string
+	CommenteerUrl string
 }
 
 type HttpContext string

@@ -4,13 +4,13 @@
 {{end}}
 
 {{define "nav"}}
-
+{{template "userLoginInfo" .}}
 {{end}}
 
 {{define "body"}}
-<div class="flex justify-center items-center flex-wrap pt-20">
+<div class="flex justify-center items-center flex-col pt-20">
     {{if .UserCookie}}
-    <div class="mb-4" style="width: 866px;">
+    <div class="mb-4 flex-wrap" style="width: 866px; max-width: 100%;">
         <!-- <form method="get"> -->
             <input class="p-3 w-10/12 rounded-md shadow-md" id="link" type="url"
                 placeholder="https://www.reddit.com/r/pics/comments/1fvmr1o/a_picture_on_my_way_home/lq87zcb/" />
@@ -22,6 +22,7 @@
         </div>
     </div>
     {{end}}
+    {{$CommenteerUrl := .CommenteerUrl}}
     {{range $i, $a := .Posts}}
     <div class="">
         <a href="/r/{{.QueryId}}">
@@ -31,7 +32,7 @@
             <img class="shadow-md" id="{{.QueryId}}" src="{{.CdnUrl}}" alt="{{.ImageUrl}}" />
             {{end}}
         </a>
-        {{template "linkActions" .}}
+        {{template "linkActions" (LinkWrap $CommenteerUrl $a)}}
     </div>
     {{end}}
 </div>

@@ -98,6 +98,7 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 		if !ok {
 			comments := []c.Comment{comment}
 			link.RedditComments = comments
+			link.QueryId = queryId
 			links[queryId] = link
 		} else {
 			val.RedditComments = append(val.RedditComments, comment)
