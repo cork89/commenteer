@@ -36,4 +36,4 @@ to do this you need to stop the commenteer app docker container and from the bas
 
 ### Basic design
 
-![design diagram](design/commenteer-design.png)
+![design diagram](design/commenteer-design.avif)
