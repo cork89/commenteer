@@ -295,7 +295,11 @@ button,
 .dlc-svg:active {
     background-color: rgba(0, 0, 0, .30);
 }
-
+@layer base {
+    img {
+        @apply inline-block;
+    }
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
