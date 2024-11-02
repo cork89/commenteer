@@ -1,0 +1,57 @@
+{{define "head"}}
+<title>Commenteer FAQ</title>
+{{end}}
+
+{{define "nav"}}
+{{template "userLoginInfo" .}}
+{{end}}
+
+{{define "body"}}
+<div class="flex align-items justify-center">
+    <div class="mt-20 max-w-full">
+        <div class="border-2 border-solid border-slate-500 bg-white p-5" style="width:1024px; border-radius: 5px;">
+            <h2 class="mb-5" style="font-size: 36px;">FAQ</h2>
+            <hr>
+            <h3 class="mb-4 mt-4">How do I upload a reddit post?</h3>
+            <div class="mb-4">
+                <button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="changeVideoTime('OLD');">old reddit</button>
+                <button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="changeVideoTime('NEW');">new reddit</button>
+                <button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="changeVideoTime('MOBILE');">mobile app</button>
+            </div>
+            <iframe id="howto" width="560" height="315"
+                src="https://www.youtube.com/embed/93PQukUQvDw?si=PmKIpYHbZop0_kmS" title="YouTube video player"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+<script>
+    const App = {
+        OLD: "OLD",
+        NEW: "NEW",
+        MOBILE: "MOBILE",
+    }
+    function changeVideoTime(app) {
+        console.log(app)
+        howToVid = document.getElementById("howto")
+
+        let timestamp = ""
+        if (app == App.NEW) {
+            timestamp = "20"
+        } else if (app == App.MOBILE) {
+            timestamp = "37"
+        } else {
+            timestamp = "0"
+        }
+        console.log(howToVid.src)
+        blankSrc = howToVid.src.slice(0, howToVid.src.indexOf(0, "&amp;"))
+        console.log(blankSrc)
+        howToVid.src = `${blankSrc}&amp;start=${timestamp}`
+        console.log(howToVid.src)
+    }
+</script>
+{{end}}

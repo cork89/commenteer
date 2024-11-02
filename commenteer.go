@@ -267,6 +267,18 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 	// http.ServeContent(w, r, "test", time.Now(), strings.NewReader(destImg))
 }
 
+func faqHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	if !ok {
+		log.Println("user context missing")
+	}
+
+	if err := tmpl["faq"].ExecuteTemplate(w, "base", user); err != nil {
+		log.Printf("faqHandler err: %v", err)
+	}
+}
+
 func LinkWrap(commenteerUrl string, link c.Link) map[string]interface{} {
 	return map[string]interface{}{
 		"CommenteerUrl": commenteerUrl,
@@ -289,6 +301,7 @@ func main() {
 	viewTemp := template.New("view").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
 	tmpl["view"] = template.Must(viewTemp.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
+	tmpl["faq"] = template.Must(template.ParseFiles("static/faq.html", "static/base.html"))
 
 	router := http.NewServeMux()
 
@@ -306,6 +319,7 @@ func main() {
 		http.ServeFile(w, r, "static/robots.txt")
 	})
 	router.HandleFunc("/image/", imageHandler)
+	router.HandleFunc("/faq/", faqHandler)
 
 	stack := middleware.CreateStack(
 		middleware.Logging,
