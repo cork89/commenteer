@@ -53,7 +53,7 @@ WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`,
 
 func (d Db) GetLinks() (links map[string]c.Link) {
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id, l.link_id
 FROM links l, comments c
 WHERE l.link_id = c.link_id
 ORDER BY l.created_date
@@ -63,7 +63,7 @@ LIMIT 30`)
 
 func (d Db) GetLink(req c.RedditRequest) (*c.Link, bool) {
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id, l.link_id
 FROM links l, comments c
 WHERE l.link_id = c.link_id and l.query_id = ($1)`, req.AsString())
 	if err != nil {
@@ -89,7 +89,7 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 		var queryId string
 		var link c.Link
 		var comment c.Comment
-		err := rows.Scan(&link.ImageUrl, &link.ProxyUrl, &queryId, &link.CdnUrl, &comment.Comment, &comment.Author, &link.UserId)
+		err := rows.Scan(&link.ImageUrl, &link.ProxyUrl, &queryId, &link.CdnUrl, &comment.Comment, &comment.Author, &link.UserId, &link.LinkId)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
@@ -201,6 +201,21 @@ func (d Db) RefreshUserUploadCount(userId int, newCount int) bool {
 	_, err := dbpool.Exec(context.Background(), query, args[0], args[1])
 	if err != nil {
 		log.Printf("error updating user: %v\n", err)
+		return false
+	}
+	return true
+}
+
+func (d Db) AddUserAction(userAction c.UserAction) bool {
+	query := `
+INSERT INTO useractions (user_id, action_type, target_id, target_type) VALUES ($1, $2, $3, $4)
+ON CONFLICT (user_id, action_type, target_id, target_type)
+DO UPDATE SET active = NOT useractions.active`
+	args := []any{userAction.UserId, userAction.ActionType, userAction.TargetId, userAction.TargetType}
+	_, err := dbpool.Exec(context.Background(), query, args[0], args[1], args[2], args[3])
+
+	if err != nil {
+		log.Printf("error inserting useraction: %v\n", err)
 		return false
 	}
 	return true

@@ -33,10 +33,18 @@
 </div>
 
 <script>
-    function likePost(event) {
-        event.setAttribute("fill", "#FB7185")
-        event.setAttribute("stroke", "#FB7185")
-        // todo add to backend
+    async function likePost(event) {
+        const url = `{{.CommenteerUrl}}/r/{{.Link.QueryId}}/like/`
+        const res = await fetch(url, {
+            method: "POST",
+        })
+
+        if (!res.ok) {
+            console.log("failed to like")
+        } else {
+            event.setAttribute("fill", event.getAttribute("fill") == "#FB7185" ? "none" : "#FB7185")
+            event.setAttribute("stroke", event.getAttribute("stroke") == "#FB7185" ? "#57534E" : "#FB7185")
+        }
     }
 
     async function copyImage(event) {

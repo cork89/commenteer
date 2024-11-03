@@ -53,6 +53,14 @@ func (l Local) RefreshUserUploadCount(userId int, newCount int) bool {
 	return true
 }
 
+func (l Local) AddUserAction(userAction c.UserAction) bool {
+	return true
+}
+
+func (l Local) UpdateUserActionActive(userAction c.UserAction) bool {
+	return true
+}
+
 func init() {
 	links = make(map[string]c.Link)
 	users = make(map[string]c.User)

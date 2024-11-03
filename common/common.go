@@ -27,6 +27,7 @@ type Link struct {
 	CdnUrl         string
 	UserId         int
 	QueryId        string
+	LinkId         int
 }
 
 type Comment struct {
@@ -49,6 +50,27 @@ type User struct {
 	UserId            int
 	RemainingUploads  int
 	UploadRefreshDtTm time.Time
+}
+
+type ActionType string
+
+const (
+	Like   ActionType = "like"
+	Follow ActionType = "follow"
+)
+
+type TargetType string
+
+const (
+	LinkTarget TargetType = "link"
+	UserTarget TargetType = "user"
+)
+
+type UserAction struct {
+	ActionType ActionType
+	TargetType TargetType
+	UserId     int
+	TargetId   int
 }
 
 type HomeData struct {

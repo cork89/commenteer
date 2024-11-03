@@ -18,6 +18,7 @@ type DataAccess interface {
 	UpdateUser(username string, accessToken string, refreshExpireDtTm time.Time) bool
 	DecrementUserUploadCount(userId int) bool
 	RefreshUserUploadCount(userId int, newCount int) bool
+	AddUserAction(userAction c.UserAction) bool
 }
 
 func GetLinks() (linkJson map[string]c.Link) {
@@ -58,6 +59,10 @@ func DecrementUserUploadCount(userId int) bool {
 
 func RefreshUserUploadCount(userId int, newCount int) bool {
 	return dataAccess.RefreshUserUploadCount(userId, newCount)
+}
+
+func AddUserAction(userAction c.UserAction) bool {
+	return dataAccess.AddUserAction(userAction)
 }
 
 // func init() {

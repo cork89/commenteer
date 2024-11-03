@@ -48,6 +48,36 @@ CREATE TABLE IF NOT EXISTS public.comments (
         ON DELETE CASCADE
 );
 
+
+--
+-- Name: useractions; Type: TABLE; Schema: public;
+--
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'action_type_enum') THEN
+        CREATE TYPE action_type_enum AS ENUM ('like', 'follow');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'target_type_enum') THEN
+        CREATE TYPE target_type_enum AS ENUM ('link', 'user');
+    END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.useractions (
+    action_id SERIAL NOT NULL PRIMARY KEY,
+    user_id integer NOT NULL,
+    action_type action_type_enum NOT NULL,
+    target_id integer NOT NULL,
+    target_type target_type_enum NOT NULL,
+    action_timestamp timestamp without time zone NOT NULL DEFAULT now(),
+    active boolean DEFAULT TRUE,
+    CONSTRAINT fk_user FOREIGN KEY (user_id)
+        REFERENCES users(user_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT useractions_unique_action
+        UNIQUE (user_id, action_type, target_id, target_type)
+);
+
 ---- create above / drop below ----
 
 -- Write your migrate down statements here. If this migration is irreversible

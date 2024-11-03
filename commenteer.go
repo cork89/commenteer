@@ -279,6 +279,41 @@ func faqHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func likeHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("in like handler")
+	redditRequest, err := extractRedditRequest(r)
+
+	if err != nil {
+		log.Printf("error getting reddit request, %v\n", err)
+		return
+	}
+
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+
+	if !ok {
+		log.Printf("error getting user, %v\n", err)
+		return
+	}
+
+	link, ok := d.GetLink(*redditRequest)
+
+	if !ok {
+		log.Printf("error getting link, %v\n", err)
+		return
+	}
+
+	userAction := c.UserAction{UserId: user.UserId, TargetType: c.LinkTarget, ActionType: c.Like, TargetId: link.LinkId}
+
+	ok = d.AddUserAction(userAction)
+
+	if !ok {
+		log.Printf("error adding user action, %v\n", err)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
 func LinkWrap(commenteerUrl string, link c.Link) map[string]interface{} {
 	return map[string]interface{}{
 		"CommenteerUrl": commenteerUrl,
@@ -320,6 +355,7 @@ func main() {
 	})
 	router.HandleFunc("/image/", imageHandler)
 	router.HandleFunc("/faq/", faqHandler)
+	router.HandleFunc("POST /r/{id}/like/", likeHandler)
 
 	stack := middleware.CreateStack(
 		middleware.Logging,
