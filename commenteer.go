@@ -329,10 +329,11 @@ func likeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func LinkWrap(commenteerUrl string, userLinkData c.UserLinkData) map[string]interface{} {
+func LinkWrap(commenteerUrl string, userLinkData c.UserLinkData, userCookie *c.UserCookie) map[string]interface{} {
 	return map[string]interface{}{
 		"CommenteerUrl": commenteerUrl,
 		"UserLinkData":  userLinkData,
+		"UserCookie":    userCookie,
 	}
 }
 
