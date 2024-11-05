@@ -105,8 +105,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	singleLinkData.Link = data
-
+	singleLinkData.UserLinkData = c.UserLinkData{Link: *data}
 	singleLinkData.UserCookie = &user.UserCookie
 	singleLinkData.RedditRequest = redditRequest.AsString()
 
@@ -117,18 +116,17 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	var singleLinkData c.SingleLinkData
-	redditRequest, err := extractRedditRequest(r)
 
 	var data *c.Link
+	var userLinkData *c.UserLinkData
 
 	ctx := r.Context()
 	user, ok := ctx.Value(c.UserCtx).(*c.User)
 	if !ok {
 		log.Println("user context missing")
-	} else {
-		singleLinkData.UserCookie = &user.UserCookie
 	}
 
+	redditRequest, err := extractRedditRequest(r)
 	if err != nil {
 		log.Println(err)
 		data = s.CreateErrorLink()
@@ -138,7 +136,17 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 		data = <-link
 	}
 
-	singleLinkData.Link = data
+	if ok {
+		singleLinkData.UserCookie = &user.UserCookie
+		userLinkData, ok = d.GetLoggedInLink(*redditRequest, user.UserId)
+		if !ok {
+			userLinkData = &c.UserLinkData{Link: *data}
+		}
+	} else {
+		userLinkData = &c.UserLinkData{Link: *data}
+	}
+
+	singleLinkData.UserLinkData = *userLinkData
 	singleLinkData.RedditRequest = redditRequest.AsString()
 	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
@@ -150,12 +158,24 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	var homeData c.HomeData
-	homeData.Posts = d.GetRecentLinks(1)
+	var userLinkData []c.UserLinkData
+	var posts []c.Link
+
+	userLinkData = make([]c.UserLinkData, 0, len(posts))
 
 	user, ok := s.GetUserCookie(r)
 	if ok {
 		homeData.UserCookie = &user.UserCookie
+		userLinkData = d.GetRecentLoggedInLinks(1, user.UserId)
+	} else {
+		posts = d.GetRecentLinks(1)
+		for _, post := range posts {
+			userLinkDataItem := c.UserLinkData{Link: post}
+			userLinkData = append(userLinkData, userLinkDataItem)
+		}
 	}
+
+	homeData.UserLinkData = userLinkData
 	homeData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
 	if err := tmpl["home"].ExecuteTemplate(w, "base", homeData); err != nil {
@@ -282,7 +302,6 @@ func faqHandler(w http.ResponseWriter, r *http.Request) {
 func likeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("in like handler")
 	redditRequest, err := extractRedditRequest(r)
-
 	if err != nil {
 		log.Printf("error getting reddit request, %v\n", err)
 		return
@@ -290,23 +309,19 @@ func likeHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	user, ok := ctx.Value(c.UserCtx).(*c.User)
-
 	if !ok {
 		log.Printf("error getting user, %v\n", err)
 		return
 	}
 
 	link, ok := d.GetLink(*redditRequest)
-
 	if !ok {
 		log.Printf("error getting link, %v\n", err)
 		return
 	}
 
 	userAction := c.UserAction{UserId: user.UserId, TargetType: c.LinkTarget, ActionType: c.Like, TargetId: link.LinkId}
-
 	ok = d.AddUserAction(userAction)
-
 	if !ok {
 		log.Printf("error adding user action, %v\n", err)
 		return
@@ -314,10 +329,10 @@ func likeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func LinkWrap(commenteerUrl string, link c.Link) map[string]interface{} {
+func LinkWrap(commenteerUrl string, userLinkData c.UserLinkData) map[string]interface{} {
 	return map[string]interface{}{
 		"CommenteerUrl": commenteerUrl,
-		"Link":          link,
+		"UserLinkData":  userLinkData,
 	}
 }
 

@@ -2,9 +2,9 @@
 <div
     class="flex align-items justify-around bg-white border-2 border-solid border-slate-500 rounded-md shadow-sm mb-6 mt-1 pl-2">
     <!-- Copy image -->
-    <div id="{{.Link.QueryId}}-copy" onclick="copyImage(this);">
+    <div id="{{.UserLinkData.QueryId}}-copy" onclick="copyImage(this);">
         <svg class="size-8 dlc-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <title>Copy {{.Link.QueryId}} image</title>
+            <title>Copy {{.UserLinkData.QueryId}} image</title>
             <path
                 d="M3 16V4C3 2.89543 3.89543 2 5 2H15M9 22H18C19.1046 22 20 21.1046 20 20V8C20 6.89543 19.1046 6 18 6H9C7.89543 6 7 6.89543 7 8V20C7 21.1046 7.89543 22 9 22Z"
                 stroke="#57534E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -12,16 +12,19 @@
     </div>
 
     <!-- Like post -->
-    <svg xmlns="http://www.w3.org/2000/svg" onclick="likePost(this)" fill="none" viewBox="0 0 24 24" stroke-width="2"
-        stroke="#57534E" class="size-8 dlc-svg">
+
+    <svg xmlns="http://www.w3.org/2000/svg" {{ if .UserCookie }} onclick="likePost(this)" {{ else }} onclick="login()"
+        {{end}} viewBox="0 0 24 24" stroke-width="2" {{ if .UserLinkData.UserAction}} {{ if .UserLinkData.Active}}
+        fill="#FB7185" stroke="#FB7185" {{ else }} fill="none" stroke="#57534E" {{end}} {{else}} fill="none"
+        stroke="#57534E" {{end}} class="size-8 dlc-svg">
         <path stroke-linecap="round" stroke-linejoin="round"
             d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
     </svg>
 
     <!-- Download image -->
-    <a href="{{.CommenteerUrl}}/image/?src={{.Link.CdnUrl}}" download="{{.Link.QueryId}}">
+    <a href="{{.CommenteerUrl}}/image/?src={{.UserLinkData.CdnUrl}}" download="{{.UserLinkData.QueryId}}">
         <svg class="size-8 dlc-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <title>Download {{.Link.QueryId}} image</title>
+            <title>Download {{.UserLinkData.QueryId}} image</title>
             <path d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7" fill="none" stroke="#57534E" stroke-linecap="round"
                 stroke-linejoin="round" stroke-width="2" />
             <polyline id="Right-2" data-name="Right" points="7.9 12.3 12 16.3 16.1 12.3" fill="none" stroke="#57534E"
@@ -34,7 +37,7 @@
 
 <script>
     async function likePost(event) {
-        const url = `{{.CommenteerUrl}}/r/{{.Link.QueryId}}/like/`
+        const url = `{{.CommenteerUrl}}/r/{{.UserLinkData.QueryId}}/like/`
         const res = await fetch(url, {
             method: "POST",
         })
@@ -45,6 +48,10 @@
             event.setAttribute("fill", event.getAttribute("fill") == "#FB7185" ? "none" : "#FB7185")
             event.setAttribute("stroke", event.getAttribute("stroke") == "#FB7185" ? "#57534E" : "#FB7185")
         }
+    }
+
+    function login() {
+        window.location.href = "/login/"
     }
 
     async function copyImage(event) {

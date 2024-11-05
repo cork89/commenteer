@@ -32,7 +32,7 @@ func getConnection(postgresUrl string) {
 func (d Db) GetRecentLinks(page int) (links []c.Link) {
 	offset := (page - 1) * 10
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.cdn_image_url, l.user_id, l.image_url, l.query_id
+SELECT l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id
 FROM links l
 WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`, offset)
 	// return handleRetrieve(rows, err)
@@ -41,12 +41,38 @@ WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`,
 	}
 	for rows.Next() {
 		var link c.Link
-		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId)
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
 		}
 		links = append(links, link)
+	}
+	return links
+}
+
+func (d Db) GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData) {
+	offset := (page - 1) * 10
+	rows, err := dbpool.Query(context.Background(), `
+select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, COALESCE(ua.active, false) AS active
+from links l
+LEFT JOIN useractions ua 
+	ON ua.user_id = l.user_id AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link'
+WHERE l.user_id = ($1) and l.cdn_image_url != ''
+ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
+
+	if err != nil {
+		log.Printf("Error retrieving recent links, %v", err)
+	}
+	for rows.Next() {
+		var link c.Link
+		var userAction c.UserAction
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &userAction.Active)
+		if err != nil {
+			log.Printf("Scan error: %v\n", err)
+			return links
+		}
+		links = append(links, c.UserLinkData{Link: link, UserAction: &userAction})
 	}
 	return links
 }
@@ -109,6 +135,31 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 		log.Printf("Row iteration error: %v\n", err)
 	}
 	return links
+}
+
+func (d Db) GetLoggedInLink(req c.RedditRequest, userId int) (*c.UserLinkData, bool) {
+	rows, err := dbpool.Query(context.Background(), `
+select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, COALESCE(ua.active, false) AS active
+from links l
+LEFT JOIN useractions ua 
+	ON ua.user_id = l.user_id AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link'
+WHERE l.user_id = ($1) and l.query_id = ($2) and l.cdn_image_url != '';`, userId, req.AsString())
+
+	if err != nil {
+		log.Printf("Error retrieving recent links, %v", err)
+	}
+	var userLinkData *c.UserLinkData
+	for rows.Next() {
+		var link c.Link
+		var userAction c.UserAction
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &userAction.Active)
+		if err != nil {
+			log.Printf("Scan error: %v\n", err)
+			return userLinkData, false
+		}
+		userLinkData = &c.UserLinkData{Link: link, UserAction: &userAction}
+	}
+	return userLinkData, true
 }
 
 func (d Db) AddLink(req c.RedditRequest, link *c.Link, userId int) {

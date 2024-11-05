@@ -30,6 +30,11 @@ type Link struct {
 	LinkId         int
 }
 
+type UserLinkData struct {
+	Link
+	*UserAction
+}
+
 type Comment struct {
 	Comment string
 	Author  string
@@ -71,17 +76,25 @@ type UserAction struct {
 	TargetType TargetType
 	UserId     int
 	TargetId   int
+	Active     bool
 }
+
+type UserActionStatus string
+
+const (
+	Created UserActionStatus = "Created"
+	Updated UserActionStatus = "Updated"
+)
 
 type HomeData struct {
 	*UserCookie
-	Posts         []Link
+	UserLinkData  []UserLinkData
 	CommenteerUrl string
 }
 
 type SingleLinkData struct {
 	*UserCookie
-	*Link
+	UserLinkData
 	RedditRequest string
 	CommenteerUrl string
 }

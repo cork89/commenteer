@@ -14,6 +14,10 @@ func (l Local) GetRecentLinks(page int) []c.Link {
 	return make([]c.Link, 0)
 }
 
+func (l Local) GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData) {
+	return make([]c.UserLinkData, 0)
+}
+
 func (l Local) GetLinks() map[string]c.Link {
 	return links
 }
@@ -21,6 +25,10 @@ func (l Local) GetLinks() map[string]c.Link {
 func (l Local) GetLink(req c.RedditRequest) (*c.Link, bool) {
 	link, ok := links[req.AsString()]
 	return &link, ok
+}
+
+func (l Local) GetLoggedInLink(req c.RedditRequest, userId int) (*c.UserLinkData, bool) {
+	return nil, false
 }
 
 func (l Local) AddLink(req c.RedditRequest, link *c.Link, userId int) {

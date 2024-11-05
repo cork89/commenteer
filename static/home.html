@@ -25,7 +25,7 @@
     </div>
     {{end}}
     {{$CommenteerUrl := .CommenteerUrl}}
-    {{range $i, $a := .Posts}}
+    {{range $i, $a := .UserLinkData}}
     <div class="">
         <a href="/r/{{.QueryId}}">
             {{ if gt $i 1 }}

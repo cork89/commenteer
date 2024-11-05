@@ -10,7 +10,9 @@ var dataAccess DataAccess
 type DataAccess interface {
 	GetLinks() map[string]c.Link
 	GetRecentLinks(page int) []c.Link
+	GetRecentLoggedInLinks(page int, userId int) []c.UserLinkData
 	GetLink(req c.RedditRequest) (*c.Link, bool)
+	GetLoggedInLink(req c.RedditRequest, userId int) (*c.UserLinkData, bool)
 	AddLink(req c.RedditRequest, link *c.Link, userId int)
 	UpdateCdnUrl(req c.RedditRequest, cdnUrl string)
 	GetUser(username string) (*c.User, bool)
@@ -29,8 +31,16 @@ func GetRecentLinks(page int) []c.Link {
 	return dataAccess.GetRecentLinks(page)
 }
 
+func GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData) {
+	return dataAccess.GetRecentLoggedInLinks(page, userId)
+}
+
 func GetLink(req c.RedditRequest) (*c.Link, bool) {
 	return dataAccess.GetLink(req)
+}
+
+func GetLoggedInLink(req c.RedditRequest, userId int) (*c.UserLinkData, bool) {
+	return dataAccess.GetLoggedInLink(req, userId)
 }
 
 func AddLink(req c.RedditRequest, link *c.Link, userId int) {
