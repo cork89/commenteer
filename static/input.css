@@ -67,8 +67,45 @@ body {
     background-color: rgb(255, 255, 255);
 }
 
+.image-comment-container-rel {
+    border-radius: 5px;
+    max-width: 100%;
+    font-family: 'Arial';
+    font-size: 23px;
+    width: 1024px;
+    background-color: rgb(255, 255, 255);
+    position: relative;
+}
+
+@media (max-width: 800px) {
+    .image-comment-container-rel {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .image-comment-container-rel {
+        font-size: 16px;
+    }
+}
+
 .image-comment-container img {
     width: 800px;
+    transition: width 0.5s ease-in-out;
+}
+
+.image-comment-container-rel img {
+    width: 1024px;
+    transition: width 0.5s ease-in-out;
+}
+
+.overlay-comments svg {
+    display: inline-block;
+}
+
+.overlay-comments .target {
+    --tw-bg-opacity: 1;
+    background-color: rgb(203 213 225 / var(--tw-bg-opacity)) /* #cbd5e1 */;
 }
 
 img {
@@ -81,6 +118,37 @@ img {
 .comment-container {
     background-color: rgb(255, 255, 255);
     max-width: 100%;
+    margin-left: 2rem;
+}
+
+.comment-container-bot {
+    background-color: rgb(255, 255, 255);
+    max-width: 90%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    top: auto;
+    bottom: 2rem;
+    padding: 1rem;
+    border-radius: 10px;
+    width: 924px;
+}
+
+.comment-container-top {
+    background-color: rgb(255, 255, 255);
+    max-width: 90%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    top: 1rem;
+    bottom: auto;
+    padding: 1rem;
+    border-radius: 10px;
+    width: 924px;
 }
 
 @media (max-width: 1220px) {
@@ -295,11 +363,13 @@ button,
 .dlc-svg:active {
     background-color: rgba(0, 0, 0, .30);
 }
+
 @layer base {
     img {
         @apply inline-block;
     }
 }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

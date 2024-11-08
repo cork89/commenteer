@@ -17,7 +17,7 @@ function isValidRedditUrl(input) {
     let url;
     try {
         url = new URL(input);
-        if (url.host !== "reddit.com" && url.host !== "www.reddit.com") {
+        if (url.host !== "reddit.com" && url.host !== "www.reddit.com" && url.host !== "old.reddit.com" && url.host !== "new.reddit.com") {
             return false, "Not a reddit link";
         }
     } catch (_) {
