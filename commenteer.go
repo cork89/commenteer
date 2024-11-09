@@ -108,6 +108,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	singleLinkData.UserLinkData = c.UserLinkData{Link: *data}
 	singleLinkData.UserCookie = &user.UserCookie
 	singleLinkData.RedditRequest = redditRequest.AsString()
+	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
 	if err := tmpl["edit"].ExecuteTemplate(w, "base", singleLinkData); err != nil {
 		log.Printf("editHandler err: %v", err)

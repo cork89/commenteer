@@ -1,6 +1,6 @@
 var commentState = 1
 
-async function takeScreenshot() {
+async function takeScreenshot(commenteerUrl) {
     // let data;
     // html2canvas(document.querySelector(".image-comment-container"), { allowTaint: true, useCORS: true }).then(canvas => {
     //     // document.body.appendChild(canvas)
@@ -19,7 +19,7 @@ async function takeScreenshot() {
     const canvas = await html2canvas(commentContainer, { allowTaint: true, useCORS: true });
     let data = canvas.toDataURL("image/webp");
     const pathname = window.location.pathname.split("/")[2];
-    const url = `http://localhost:8090/r/${pathname}/submit/`;
+    const url = `${commenteerUrl}/r/${pathname}/submit/`;
     const [type, imgData] = data.split(",")
     const headers = new Headers();
     headers.append("Content-Type", "image/webp");
