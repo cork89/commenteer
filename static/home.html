@@ -19,8 +19,9 @@
         <a href="/faq/"><button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
                 style="margin-top:5px; margin-left: 2px;">help</button></a>
         <!-- </form> -->
-        <div>
+        <div class="ml-4 mt-2">
             <p id="linkError"></p>
+            <span>remaining uploads: {{.User.RemainingUploads}}</span>
         </div>
     </div>
     {{end}}
@@ -38,5 +39,10 @@
         {{template "linkActions" (LinkWrap $CommenteerUrl $a $UserCookie)}}
     </div>
     {{end}}
+</div>
+<div id="clipboard-note" class="fixed inset-left-0 bottom-0 z-10 bg-blue-300 flex mb-10 ml-4 invisible">
+    <span class="px-8 py-4">
+        copied to clipboard
+    </span>
 </div>
 {{end}}

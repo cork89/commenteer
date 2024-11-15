@@ -74,7 +74,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	go d.UpdateCdnUrl(*redditRequest, cdnUrl)
 	go snoo.DecrementUserUploadCount(user)
 
-	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusSeeOther)
+	w.Header().Set("Cache-Control", "max-age=0")
+	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusFound)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +167,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := s.GetUserCookie(r)
 	if ok {
-		homeData.UserCookie = &user.UserCookie
+		homeData.User = user
 		userLinkData = d.GetRecentLoggedInLinks(1, user.UserId)
 	} else {
 		posts = d.GetRecentLinks(1)

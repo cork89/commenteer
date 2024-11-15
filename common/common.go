@@ -87,7 +87,7 @@ const (
 )
 
 type HomeData struct {
-	*UserCookie
+	*User
 	UserLinkData  []UserLinkData
 	CommenteerUrl string
 }

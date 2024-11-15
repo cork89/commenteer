@@ -187,9 +187,9 @@ func (d Db) AddLink(req c.RedditRequest, link *c.Link, userId int) {
 }
 
 func (d Db) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
-	query := "UPDATE links SET cdn_image_url = ($1) WHERE query_id = ($2)"
+	query := "UPDATE links SET cdn_image_url = ($1) WHERE query_id = ($2) AND cdn_image_url IS DISTINCT FROM ($3)"
 	args := []any{cdnUrl, req.AsString()}
-	err := dbpool.QueryRow(context.Background(), query, args[0], args[1])
+	_, err := dbpool.Exec(context.Background(), query, args[0], args[1], args[0])
 
 	if err != nil {
 		log.Printf("error updating link: %v, cdnUrl: %s, err: %v\n", req, cdnUrl, err)
