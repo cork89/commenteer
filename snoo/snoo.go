@@ -178,6 +178,7 @@ func (r RealRedditCaller) callRedditApi(req c.RedditRequest, user *c.User) (link
 		log.Println("Error calling reddit api")
 	}
 	defer res.Body.Close()
+	go DecrementUserUploadCount(user)
 
 	return parseApiResponse(res, req, user)
 }

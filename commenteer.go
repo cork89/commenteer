@@ -11,7 +11,6 @@ import (
 	"main/dataaccess"
 	d "main/dataaccess"
 	"main/middleware"
-	"main/snoo"
 	s "main/snoo"
 	"net/http"
 	"os"
@@ -47,7 +46,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	_, ok := ctx.Value(c.UserCtx).(*c.User)
 	if !ok {
 		log.Println("user context missing")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -72,7 +71,6 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cdnUrl := fmt.Sprintf("%s/%s.%s", s.CdnBaseUrl, redditRequest.AsString(), imageType)
 	go d.UpdateCdnUrl(*redditRequest, cdnUrl)
-	go snoo.DecrementUserUploadCount(user)
 
 	w.Header().Set("Cache-Control", "max-age=0")
 	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusFound)
