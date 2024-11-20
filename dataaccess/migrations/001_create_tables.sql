@@ -80,5 +80,10 @@ CREATE TABLE IF NOT EXISTS public.useractions (
 
 ---- create above / drop below ----
 
+DROP TABLE public.useractions;
+DROP TABLE public.comments;
+DROP TABLE public.links;
+DROP TABLE public.users;
+
 -- Write your migrate down statements here. If this migration is irreversible
 -- Then delete the separator line above.

@@ -13,8 +13,8 @@
 
     <!-- Like post -->
 
-    <svg xmlns="http://www.w3.org/2000/svg" {{ if .UserCookie }} onclick="likePost(this)" {{ else }} onclick="login()"
-        {{end}} viewBox="0 0 24 24" stroke-width="2" {{ if .UserLinkData.UserAction}} {{ if .UserLinkData.Active}}
+    <svg xmlns="http://www.w3.org/2000/svg" {{ if .User }} onclick="likePost(this)" {{ else }} onclick="login()"{{end}}
+        viewBox="0 0 24 24" stroke-width="2" {{ if .UserLinkData.UserAction}} {{ if .UserLinkData.Active}}
         fill="#FB7185" stroke="#FB7185" {{ else }} fill="none" stroke="#57534E" {{end}} {{else}} fill="none"
         stroke="#57534E" {{end}} class="size-8 dlc-svg">
         <path stroke-linecap="round" stroke-linejoin="round"

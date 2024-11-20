@@ -14,25 +14,33 @@ async function takeScreenshot(commenteerUrl) {
     //     // link.click();
     //     data = canvas.toDataURL("image/webp");
     // });
+    const publishButton = document.getElementById("publish")
+    publishButton.classList.add("disabled")
     const commentContainer = commentState == 1 ? document.querySelector(".image-comment-container") : document.querySelector(".image-comment-container-rel");
 
     const canvas = await html2canvas(commentContainer, { allowTaint: true, useCORS: true });
     let data = canvas.toDataURL("image/webp");
-    const pathname = window.location.pathname.split("/")[2];
+    const pathname = window.location.pathname.split("/")[2]
     const url = `${commenteerUrl}/r/${pathname}/submit/`;
     const [type, imgData] = data.split(",")
     const headers = new Headers();
-    headers.append("Content-Type", "image/webp");
-    headers.append("Content-Transfer-Encoding", "base64")
+    headers.append("Content-Type", "application/json")
+    // headers.append("Content-Transfer-Encoding", "base64")
+    const body = {
+        imgData: imgData,
+        height: canvas.height,
+        width: canvas.width,
+    }
     const res = await fetch(url, {
         headers: headers,
         method: "POST",
-        body: imgData,
+        body: JSON.stringify(body),
         redirect: "follow",
         credentials: 'include',
     });
     if (!res.ok) {
         console.log("failed to post image")
+        publishButton.classList.remove("disabled")
     }
     else {
         console.log("success posting")

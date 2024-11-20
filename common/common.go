@@ -28,6 +28,8 @@ type Link struct {
 	UserId         int
 	QueryId        string
 	LinkId         int
+	ImageWidth     int
+	ImageHeight    int
 }
 
 type UserLinkData struct {
@@ -90,10 +92,11 @@ type HomeData struct {
 	*User
 	UserLinkData  []UserLinkData
 	CommenteerUrl string
+	ErrorText     string
 }
 
 type SingleLinkData struct {
-	*UserCookie
+	*User
 	UserLinkData
 	RedditRequest string
 	CommenteerUrl string

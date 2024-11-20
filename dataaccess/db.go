@@ -19,7 +19,7 @@ var dbpool *pgxpool.Pool
 
 type Db struct{}
 
-func getConnection(postgresUrl string) {
+func createPool(postgresUrl string) {
 	var err error
 	if dbpool == nil {
 		dbpool, err = pgxpool.New(context.Background(), postgresUrl)
@@ -29,10 +29,18 @@ func getConnection(postgresUrl string) {
 	}
 }
 
+func getConnection() (*pgx.Conn, error) {
+	conn, err := dbpool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return conn.Conn(), nil
+}
+
 func (d Db) GetRecentLinks(page int) (links []c.Link) {
 	offset := (page - 1) * 10
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id
+SELECT l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, l.cdn_image_height, l.cdn_image.width
 FROM links l
 WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`, offset)
 	// return handleRetrieve(rows, err)
@@ -41,7 +49,7 @@ WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`,
 	}
 	for rows.Next() {
 		var link c.Link
-		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId)
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &link.ImageHeight, &link.ImageWidth)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
@@ -54,7 +62,7 @@ WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`,
 func (d Db) GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData) {
 	offset := (page - 1) * 10
 	rows, err := dbpool.Query(context.Background(), `
-select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, COALESCE(ua.active, false) AS active
+select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, l.cdn_image_height, l.cdn_image_width, COALESCE(ua.active, false) AS active
 from links l
 LEFT JOIN useractions ua 
 	ON ua.user_id = l.user_id AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link'
@@ -67,7 +75,7 @@ ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
 	for rows.Next() {
 		var link c.Link
 		var userAction c.UserAction
-		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &userAction.Active)
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &link.ImageHeight, &link.ImageWidth, &userAction.Active)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
@@ -79,7 +87,7 @@ ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
 
 func (d Db) GetLinks() (links map[string]c.Link) {
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id, l.link_id
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id, l.link_id, l.cdn_image_height, l.cdn_image_width
 FROM links l, comments c
 WHERE l.link_id = c.link_id
 ORDER BY l.created_date
@@ -89,7 +97,7 @@ LIMIT 30`)
 
 func (d Db) GetLink(req c.RedditRequest) (*c.Link, bool) {
 	rows, err := dbpool.Query(context.Background(), `
-SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id, l.link_id
+SELECT l.image_url, l.proxy_url, l.query_id, l.cdn_image_url, c.comment, c.author, l.user_id, l.link_id, l.cdn_image_height, l.cdn_image_width
 FROM links l, comments c
 WHERE l.link_id = c.link_id and l.query_id = ($1)`, req.AsString())
 	if err != nil {
@@ -115,7 +123,7 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 		var queryId string
 		var link c.Link
 		var comment c.Comment
-		err := rows.Scan(&link.ImageUrl, &link.ProxyUrl, &queryId, &link.CdnUrl, &comment.Comment, &comment.Author, &link.UserId, &link.LinkId)
+		err := rows.Scan(&link.ImageUrl, &link.ProxyUrl, &queryId, &link.CdnUrl, &comment.Comment, &comment.Author, &link.UserId, &link.LinkId, &link.ImageHeight, &link.ImageWidth)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return links
@@ -139,7 +147,7 @@ func handleRetrieve(rows pgx.Rows, err error) (links map[string]c.Link) {
 
 func (d Db) GetLoggedInLink(req c.RedditRequest, userId int) (*c.UserLinkData, bool) {
 	rows, err := dbpool.Query(context.Background(), `
-select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, COALESCE(ua.active, false) AS active
+select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, l.cdn_image_height, l.cdn_image_width, COALESCE(ua.active, false) AS active
 from links l
 LEFT JOIN useractions ua 
 	ON ua.user_id = l.user_id AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link'
@@ -152,7 +160,7 @@ WHERE l.user_id = ($1) and l.query_id = ($2) and l.cdn_image_url != '';`, userId
 	for rows.Next() {
 		var link c.Link
 		var userAction c.UserAction
-		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &userAction.Active)
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &link.ImageHeight, &link.ImageWidth, &userAction.Active)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
 			return userLinkData, false
@@ -186,10 +194,10 @@ func (d Db) AddLink(req c.RedditRequest, link *c.Link, userId int) {
 	}
 }
 
-func (d Db) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
-	query := "UPDATE links SET cdn_image_url = ($1) WHERE query_id = ($2) AND cdn_image_url IS DISTINCT FROM ($3)"
-	args := []any{cdnUrl, req.AsString()}
-	_, err := dbpool.Exec(context.Background(), query, args[0], args[1], args[0])
+func (d Db) UpdateCdnUrl(req c.RedditRequest, cdnUrl string, height int, width int) {
+	query := "UPDATE links SET cdn_image_url = ($1), cdn_image_height = ($2), cdn_image_width = ($3) WHERE query_id = ($4)" // AND cdn_image_url IS DISTINCT FROM ($5)"
+	args := []any{cdnUrl, req.AsString(), height, width}
+	_, err := dbpool.Exec(context.Background(), query, args[0], args[2], args[3], args[1])
 
 	if err != nil {
 		log.Printf("error updating link: %v, cdnUrl: %s, err: %v\n", req, cdnUrl, err)
@@ -286,5 +294,5 @@ func init() {
 	postgresOpt := os.Getenv("POSTGRES_OPT")
 
 	postgresUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", postgresUser, postgresPw, postgresHost, postgresPort, postgresDb, postgresOpt)
-	getConnection(postgresUrl)
+	createPool(postgresUrl)
 }

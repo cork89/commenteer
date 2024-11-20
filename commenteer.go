@@ -1,20 +1,23 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"log/slog"
 	c "main/common"
-	"main/dataaccess"
 	d "main/dataaccess"
 	"main/middleware"
 	s "main/snoo"
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -22,6 +25,10 @@ import (
 )
 
 var tmpl map[string]*template.Template
+
+//go:embed static/AllowedSubreddits.txt
+var subreddits string
+var allowedSubreddits []string
 
 var validPathValue = regexp.MustCompile("^[a-zA-Z0-9_]+-[a-zA-Z0-9]{7}-[a-zA-Z0-9]{7}$")
 
@@ -34,6 +41,12 @@ func extractRedditRequest(r *http.Request) (*c.RedditRequest, error) {
 	}
 
 	return &c.RedditRequest{Subreddit: parts[0], Article: parts[1], Comment: parts[2]}, nil
+}
+
+var imageInfo struct {
+	ImgData string `json:"imgData"`
+	Width   int    `json:"width"`
+	Height  int    `json:"height"`
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,20 +70,27 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	imageType := strings.Split(contentType, "/")[1]
 	fileName := fmt.Sprintf("%s.%s", redditRequest.AsString(), imageType)
 
-	b64 := base64.NewDecoder(base64.StdEncoding, r.Body)
-	// fmt.Println(contentType, imageType, fileName)
-	slog.Info("saveHandler", "ContentType", contentType, "imageType", imageType, "filename", fileName)
-	// fmt.Println(r.Body, b64)
-	// w.WriteHeader(http.StatusInternalServerError)
-	// return
+	if err = json.NewDecoder(r.Body).Decode(&imageInfo); err != nil {
+		log.Printf("failed to unmarshal request body, err=%v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	_, err = d.UploadImage(b64, fileName)
+	b64, err := base64.StdEncoding.DecodeString(imageInfo.ImgData)
+	if err != nil {
+		log.Printf("failed to decode base64 image, err=%v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	slog.Info("saveHandler", "ContentType", contentType, "imageType", imageType, "filename", fileName)
+	imgDataReader := bytes.NewReader(b64)
+	_, err = d.UploadImage(imgDataReader, fileName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	cdnUrl := fmt.Sprintf("%s/%s.%s", s.CdnBaseUrl, redditRequest.AsString(), imageType)
-	go d.UpdateCdnUrl(*redditRequest, cdnUrl)
+	go d.UpdateCdnUrl(*redditRequest, cdnUrl, imageInfo.Height, imageInfo.Width)
 
 	w.Header().Set("Cache-Control", "max-age=0")
 	http.Redirect(w, r, fmt.Sprintf("/r/%s", redditRequest.AsString()), http.StatusFound)
@@ -80,6 +100,12 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	var singleLinkData c.SingleLinkData
 
 	redditRequest, err := extractRedditRequest(r)
+
+	if !slices.Contains(allowedSubreddits, redditRequest.Subreddit) {
+		r.Header.Add("ErrorText", fmt.Sprintf("r/%s is not a supported subreddit.", redditRequest.Subreddit))
+		homeHandler(w, r)
+		return
+	}
 
 	var data *c.Link
 
@@ -105,7 +131,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	singleLinkData.UserLinkData = c.UserLinkData{Link: *data}
-	singleLinkData.UserCookie = &user.UserCookie
+	singleLinkData.User = user
 	singleLinkData.RedditRequest = redditRequest.AsString()
 	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
@@ -137,7 +163,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ok {
-		singleLinkData.UserCookie = &user.UserCookie
+		singleLinkData.User = user
 		userLinkData, ok = d.GetLoggedInLink(*redditRequest, user.UserId)
 		if !ok {
 			userLinkData = &c.UserLinkData{Link: *data}
@@ -177,6 +203,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	homeData.UserLinkData = userLinkData
 	homeData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+	homeData.ErrorText = r.Header.Get("ErrorText")
 
 	if err := tmpl["home"].ExecuteTemplate(w, "base", homeData); err != nil {
 		log.Printf("homeHandler err: %v", err)
@@ -329,20 +356,21 @@ func likeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func LinkWrap(commenteerUrl string, userLinkData c.UserLinkData, userCookie *c.UserCookie) map[string]interface{} {
+func LinkWrap(commenteerUrl string, userLinkData c.UserLinkData, user *c.User) map[string]interface{} {
 	return map[string]interface{}{
 		"CommenteerUrl": commenteerUrl,
 		"UserLinkData":  userLinkData,
-		"UserCookie":    userCookie,
+		"User":          user,
 	}
 }
 
 func main() {
-	dataaccess.Initialize("")
 	err := godotenv.Load("/run/secrets/.env.local")
 	if err != nil {
 		log.Println(err)
 	}
+
+	allowedSubreddits = strings.Split(subreddits, "\n")
 
 	tmpl = make(map[string]*template.Template)
 

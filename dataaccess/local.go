@@ -35,7 +35,7 @@ func (l Local) AddLink(req c.RedditRequest, link *c.Link, userId int) {
 	links[req.AsString()] = *link
 }
 
-func (l Local) UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
+func (l Local) UpdateCdnUrl(req c.RedditRequest, cdnUrl string, height int, width int) {
 
 }
 

@@ -14,7 +14,7 @@ type DataAccess interface {
 	GetLink(req c.RedditRequest) (*c.Link, bool)
 	GetLoggedInLink(req c.RedditRequest, userId int) (*c.UserLinkData, bool)
 	AddLink(req c.RedditRequest, link *c.Link, userId int)
-	UpdateCdnUrl(req c.RedditRequest, cdnUrl string)
+	UpdateCdnUrl(req c.RedditRequest, cdnUrl string, height int, width int)
 	GetUser(username string) (*c.User, bool)
 	AddUser(user c.User) bool
 	UpdateUser(username string, accessToken string, refreshExpireDtTm time.Time) bool
@@ -47,8 +47,8 @@ func AddLink(req c.RedditRequest, link *c.Link, userId int) {
 	dataAccess.AddLink(req, link, userId)
 }
 
-func UpdateCdnUrl(req c.RedditRequest, cdnUrl string) {
-	dataAccess.UpdateCdnUrl(req, cdnUrl)
+func UpdateCdnUrl(req c.RedditRequest, cdnUrl string, height int, width int) {
+	dataAccess.UpdateCdnUrl(req, cdnUrl, height, width)
 }
 
 func GetUser(username string) (*c.User, bool) {
@@ -75,25 +75,35 @@ func AddUserAction(userAction c.UserAction) bool {
 	return dataAccess.AddUserAction(userAction)
 }
 
-// func init() {
-// 	err := godotenv.Load("/run/secrets/.env.local")
-// 	if err != nil {
-// 		log.Println(err)
-// 	}
-
-// 	dataAccessType := os.Getenv("DATA_ACCESS_TYPE")
-
-// 	if dataAccessType == "local" {
-// 		dataAccess = &Local{}
-// 	} else {
-// 		dataAccess = &Db{}
-// 	}
-// }
-
 func Initialize(dataAccessType string) {
 	if dataAccessType == "local" {
 		dataAccess = &Local{}
 	} else {
 		dataAccess = &Db{}
+
+		migrator, err := NewMigrator()
+		if err != nil {
+			panic(err)
+		}
+
+		now, exp, info, err := migrator.Info()
+		if err != nil {
+			panic(err)
+		}
+
+		if now < exp {
+			// migration is required, dump out the current state
+			// and perform the migration
+			println("migration needed, current state:")
+			println(info)
+
+			err = migrator.Migrate()
+			if err != nil {
+				panic(err)
+			}
+			println("migration successful!")
+		} else {
+			println("no database migration needed")
+		}
 	}
 }

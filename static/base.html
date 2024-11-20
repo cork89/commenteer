@@ -26,7 +26,7 @@
 
 {{ define "userLoginInfo" }}
 <div class="flex items-center gap-2 mr-4">
-    {{if .UserCookie}}
+    {{if .User}}
     <p>{{.Username}}</p>
     <img class="w-7 bg-white rounded-full" src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
     <form action="/logout/" method="post">
