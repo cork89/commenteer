@@ -1,6 +1,7 @@
 package dataaccess
 
 import (
+	"log"
 	c "main/common"
 	"time"
 )
@@ -83,12 +84,14 @@ func Initialize(dataAccessType string) {
 
 		migrator, err := NewMigrator()
 		if err != nil {
-			panic(err)
+			log.Printf("Failed to create migrator, err=%v\n", err)
+			return
 		}
 
 		now, exp, info, err := migrator.Info()
 		if err != nil {
-			panic(err)
+			log.Printf("Failed to get migrator info, err=%v\n", err)
+			return
 		}
 
 		if now < exp {
@@ -99,7 +102,8 @@ func Initialize(dataAccessType string) {
 
 			err = migrator.Migrate()
 			if err != nil {
-				panic(err)
+				log.Printf("Failed to get migrate, err=%v\n", err)
+				return
 			}
 			println("migration successful!")
 		} else {
