@@ -2,7 +2,7 @@
 <div
     class="flex align-items justify-around bg-white border-2 border-solid border-slate-500 rounded-md shadow-sm mb-6 mt-1 pl-2">
     <!-- Copy image -->
-    <div id="{{.UserLinkData.QueryId}}-copy" onclick="copyImage(this);">
+    <div id="{{.UserLinkData.QueryId}}-copy" onclick="copyImage(this, '{{.CommenteerUrl}}');">
         <svg class="size-8 dlc-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <title>Copy {{.UserLinkData.QueryId}} image</title>
             <path
@@ -13,7 +13,7 @@
 
     <!-- Like post -->
 
-    <svg xmlns="http://www.w3.org/2000/svg" {{ if .User }} onclick="likePost(this)" {{ else }} onclick="login()"{{end}}
+    <svg xmlns="http://www.w3.org/2000/svg" {{ if .User }} onclick="likePost(this, '{{.CommenteerUrl}}', '{{.UserLinkData.QueryId}}');" {{ else }} onclick="login()"{{end}}
         viewBox="0 0 24 24" stroke-width="2" {{ if .UserLinkData.UserAction}} {{ if .UserLinkData.Active}}
         fill="#FB7185" stroke="#FB7185" {{ else }} fill="none" stroke="#57534E" {{end}} {{else}} fill="none"
         stroke="#57534E" {{end}} class="size-8 dlc-svg">
@@ -34,57 +34,4 @@
         </svg>
     </a>
 </div>
-
-<script>
-    async function likePost(event) {
-        const url = `{{.CommenteerUrl}}/r/{{.UserLinkData.QueryId}}/like/`
-        const res = await fetch(url, {
-            method: "POST",
-        })
-
-        if (!res.ok) {
-            console.log("failed to like")
-        } else {
-            event.setAttribute("fill", event.getAttribute("fill") == "#FB7185" ? "none" : "#FB7185")
-            event.setAttribute("stroke", event.getAttribute("stroke") == "#FB7185" ? "#57534E" : "#FB7185")
-        }
-    }
-
-    function login() {
-        window.location.href = "/login/"
-    }
-
-    async function copyImage(event) {
-        try {
-            const queryId = event.id.substr(0, event.id.indexOf("-copy"))
-            const imgDiv = document.getElementById(queryId)
-            const img = imgDiv.src
-
-            // let imgData = sessionStorage.getItem(imgId);
-            // if (!imgBlob) {
-            const imgData = await fetch(`{{.CommenteerUrl}}/image/?src=${img}`, {
-                mode: "no-cors",
-                headers: {
-                    "Access-Control-Allow-Origin": "*",
-                }
-            }).then(res => res.arrayBuffer());
-            // sessionStorage.setItem(imgId, imgData);
-            // }
-            const imgBlob = new Blob([await imgData], { type: 'image/png' });
-
-            navigator.clipboard.write([
-                new ClipboardItem({
-                    'image/png': imgBlob
-                })
-            ]);
-            const clipboardNote = document.getElementById("clipboard-note")
-            clipboardNote.classList.remove("invisible")
-            setTimeout(() => {
-                clipboardNote.classList.add("invisible")
-            }, 5000)
-        } catch (error) {
-            console.error(error);
-        }
-    }
-</script>
 {{end}}

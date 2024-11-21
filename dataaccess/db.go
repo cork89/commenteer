@@ -65,8 +65,8 @@ func (d Db) GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData
 select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, l.cdn_image_height, l.cdn_image_width, COALESCE(ua.active, false) AS active
 from links l
 LEFT JOIN useractions ua 
-	ON ua.user_id = l.user_id AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link'
-WHERE l.user_id = ($1) and l.cdn_image_url != ''
+	ON ua.user_id = l.user_id AND ua.user_id = ($1) AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link'
+WHERE l.cdn_image_url != ''
 ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
 
 	if err != nil {
