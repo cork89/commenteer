@@ -81,33 +81,34 @@ func Initialize(dataAccessType string) {
 		dataAccess = &Local{}
 	} else {
 		dataAccess = &Db{}
-
-		migrator, err := NewMigrator()
-		if err != nil {
-			log.Printf("Failed to create migrator, err=%v\n", err)
-			return
-		}
-
-		now, exp, info, err := migrator.Info()
-		if err != nil {
-			log.Printf("Failed to get migrator info, err=%v\n", err)
-			return
-		}
-
-		if now < exp {
-			// migration is required, dump out the current state
-			// and perform the migration
-			println("migration needed, current state:")
-			println(info)
-
-			err = migrator.Migrate()
+		go func() {
+			migrator, err := NewMigrator()
 			if err != nil {
-				log.Printf("Failed to get migrate, err=%v\n", err)
+				log.Printf("Failed to create migrator, err=%v\n", err)
 				return
 			}
-			println("migration successful!")
-		} else {
-			println("no database migration needed")
-		}
+
+			now, exp, info, err := migrator.Info()
+			if err != nil {
+				log.Printf("Failed to get migrator info, err=%v\n", err)
+				return
+			}
+
+			if now < exp {
+				// migration is required, dump out the current state
+				// and perform the migration
+				println("migration needed, current state:")
+				println(info)
+
+				err = migrator.Migrate()
+				if err != nil {
+					log.Printf("Failed to get migrate, err=%v\n", err)
+					return
+				}
+				println("migration successful!")
+			} else {
+				println("no database migration needed")
+			}
+		}()
 	}
 }
