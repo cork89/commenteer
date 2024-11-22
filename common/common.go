@@ -93,6 +93,7 @@ type HomeData struct {
 	UserLinkData  []UserLinkData
 	CommenteerUrl string
 	ErrorText     string
+	Path          string
 }
 
 type SingleLinkData struct {

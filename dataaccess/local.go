@@ -14,7 +14,15 @@ func (l Local) GetRecentLinks(page int) []c.Link {
 	return make([]c.Link, 0)
 }
 
+func (l Local) GetRecentLinksByUsername(page int, username string) []c.Link {
+	return make([]c.Link, 0)
+}
+
 func (l Local) GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData) {
+	return make([]c.UserLinkData, 0)
+}
+
+func (l Local) GetRecentLoggedInLinksByUsername(page int, userId int, username string) (links []c.UserLinkData) {
 	return make([]c.UserLinkData, 0)
 }
 

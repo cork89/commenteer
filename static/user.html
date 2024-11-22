@@ -1,0 +1,30 @@
+{{define "head"}}
+<title>Commenteer - {{ .Path }}</title>
+<script src="/static/linkActions.js" async></script>
+{{end}}
+
+{{define "nav"}}
+{{template "userLoginInfo" .}}
+{{end}}
+
+{{define "body"}}
+<div class="flex justify-center items-center flex-col pt-20">
+    {{$CommenteerUrl := .CommenteerUrl}}
+    {{$UserCookie := .User}}
+    {{range $i, $a := .UserLinkData}}
+    <div class="">
+        <a href="/r/{{.QueryId}}">
+            <img class="shadow-md" id="{{.QueryId}}" src="{{.CdnUrl}}" alt="{{.ImageUrl}}" {{if gt .ImageWidth 0}}
+                width={{.ImageWidth}}{{end}} {{if gt .ImageHeight 1}} height={{.ImageHeight}}{{end}} {{ if gt $i
+                1}}loading="lazy" {{end}} />
+        </a>
+        {{template "linkActions" (LinkWrap $CommenteerUrl $a $UserCookie)}}
+    </div>
+    {{end}}
+</div>
+<div id="clipboard-note" class="fixed inset-left-0 bottom-0 z-10 bg-blue-300 flex mb-10 ml-4 shadow-md invisible">
+    <span class="px-8 py-4">
+        copied to clipboard
+    </span>
+</div>
+{{end}}

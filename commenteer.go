@@ -31,6 +31,7 @@ var subreddits string
 var allowedSubreddits []string
 
 var validPathValue = regexp.MustCompile("^[a-zA-Z0-9_]+-[a-zA-Z0-9]{7}-[a-zA-Z0-9]{7}$")
+var validUsername = regexp.MustCompile("^[-_a-zA-Z0-9]{3,20}$")
 
 func extractRedditRequest(r *http.Request) (*c.RedditRequest, error) {
 	m := validPathValue.FindStringSubmatch(r.PathValue("id"))
@@ -41,6 +42,15 @@ func extractRedditRequest(r *http.Request) (*c.RedditRequest, error) {
 	}
 
 	return &c.RedditRequest{Subreddit: parts[0], Article: parts[1], Comment: parts[2]}, nil
+}
+
+func extractUsername(r *http.Request) (string, error) {
+	m := validUsername.FindStringSubmatch(r.PathValue("username"))
+	log.Println("m: ", m)
+	if len(m) != 1 {
+		return "", errors.New("invalid username")
+	}
+	return fmt.Sprintf("u/%s", m[0]), nil
 }
 
 var imageInfo struct {
@@ -207,6 +217,43 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl["home"].ExecuteTemplate(w, "base", homeData); err != nil {
 		log.Printf("homeHandler err: %v", err)
+	}
+}
+
+func userHandler(w http.ResponseWriter, r *http.Request) {
+	var homeData c.HomeData
+	var userLinkData []c.UserLinkData
+	var posts []c.Link
+
+	username, err := extractUsername(r)
+
+	if err != nil {
+		log.Printf("error extracting username, err=%v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	userLinkData = make([]c.UserLinkData, 0, len(posts))
+
+	user, ok := s.GetUserCookie(r)
+	if ok {
+		homeData.User = user
+		userLinkData = d.GetRecentLoggedInLinksByUsername(1, user.UserId, username)
+	} else {
+		posts = d.GetRecentLinksByUsername(1, username)
+		for _, post := range posts {
+			userLinkDataItem := c.UserLinkData{Link: post}
+			userLinkData = append(userLinkData, userLinkDataItem)
+		}
+	}
+
+	homeData.UserLinkData = userLinkData
+	homeData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+	homeData.ErrorText = r.Header.Get("ErrorText")
+	homeData.Path = r.URL.Path
+
+	if err := tmpl["user"].ExecuteTemplate(w, "base", homeData); err != nil {
+		log.Printf("userHandler err: %v", err)
 	}
 }
 
@@ -381,6 +428,8 @@ func main() {
 	tmpl["view"] = template.Must(viewTemp.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
 	tmpl["faq"] = template.Must(template.ParseFiles("static/faq.html", "static/base.html"))
+	userTemp := template.New("home").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
+	tmpl["user"] = template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/linkActions.html"))
 
 	router := http.NewServeMux()
 
@@ -389,6 +438,7 @@ func main() {
 	router.HandleFunc("/", homeHandler)
 	router.HandleFunc("GET /login/", loginHandler)
 	router.HandleFunc("POST /login/", loginPostHandler)
+	router.HandleFunc("/u/{username}/", userHandler)
 	loggedInRouter := http.NewServeMux()
 	loggedInRouter.HandleFunc("GET /r/{id}/submit/", editHandler)
 	loggedInRouter.HandleFunc("POST /r/{id}/submit/", saveHandler)
