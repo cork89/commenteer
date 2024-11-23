@@ -199,7 +199,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	userLinkData = make([]c.UserLinkData, 0, len(posts))
 
-	user, ok := s.GetUserCookie(r)
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	if !ok {
+		user, ok = s.GetUserCookie(r)
+	}
 	if ok {
 		multipleLinkData.User = user
 		userLinkData = d.GetRecentLoggedInLinks(1, user.UserId)
@@ -276,7 +280,17 @@ func userHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user
 		return
 	}
 
-	user, ok := s.GetUserCookie(r)
+	ctx := r.Context()
+	user, ok := ctx.Value(c.UserCtx).(*c.User)
+	if !ok {
+		user, ok = s.GetUserCookie(r)
+	}
+
+	if ok && user.Username != username {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
 	multipleLinkData = linkRetriever(user, ok, username)
 	multipleLinkData.Path = username
 	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
@@ -403,7 +417,6 @@ func faqHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func likeHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("in like handler")
 	redditRequest, err := extractRedditRequest(r)
 	if err != nil {
 		log.Printf("error getting reddit request, %v\n", err)
