@@ -88,12 +88,21 @@ const (
 	Updated UserActionStatus = "Updated"
 )
 
-type HomeData struct {
+type UserState string
+
+const (
+	Posts    UserState = "posts"
+	Saved    UserState = "saved"
+	Settings UserState = "settings"
+)
+
+type MultipleLinkData struct {
 	*User
 	UserLinkData  []UserLinkData
 	CommenteerUrl string
 	ErrorText     string
 	Path          string
+	UserState     UserState
 }
 
 type SingleLinkData struct {

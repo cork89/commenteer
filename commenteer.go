@@ -193,7 +193,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	var homeData c.HomeData
+	var multipleLinkData c.MultipleLinkData
 	var userLinkData []c.UserLinkData
 	var posts []c.Link
 
@@ -201,7 +201,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := s.GetUserCookie(r)
 	if ok {
-		homeData.User = user
+		multipleLinkData.User = user
 		userLinkData = d.GetRecentLoggedInLinks(1, user.UserId)
 	} else {
 		posts = d.GetRecentLinks(1)
@@ -211,20 +211,63 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	homeData.UserLinkData = userLinkData
-	homeData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
-	homeData.ErrorText = r.Header.Get("ErrorText")
+	multipleLinkData.UserLinkData = userLinkData
+	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+	multipleLinkData.ErrorText = r.Header.Get("ErrorText")
 
-	if err := tmpl["home"].ExecuteTemplate(w, "base", homeData); err != nil {
+	if err := tmpl["home"].ExecuteTemplate(w, "base", multipleLinkData); err != nil {
 		log.Printf("homeHandler err: %v", err)
 	}
 }
 
-func userHandler(w http.ResponseWriter, r *http.Request) {
-	var homeData c.HomeData
-	var userLinkData []c.UserLinkData
-	var posts []c.Link
+func getUserLinks(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData) {
+	userLinkData := make([]c.UserLinkData, 0)
 
+	if userLoggedIn {
+		multipleLinkData.User = user
+	}
+	if userLoggedIn && user.Username == username {
+		userLinkData = d.GetRecentLoggedInLinks(1, user.UserId)
+	} else {
+		posts, userExists := d.GetRecentLinksByUsername(1, username)
+		if !userExists {
+			multipleLinkData.ErrorText = "user not found"
+		} else {
+			for _, post := range posts {
+				userLinkDataItem := c.UserLinkData{Link: post}
+				userLinkData = append(userLinkData, userLinkDataItem)
+			}
+		}
+	}
+	multipleLinkData.UserLinkData = userLinkData
+	multipleLinkData.UserState = c.Posts
+	return multipleLinkData
+}
+
+func getUserSavedLinks(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData) {
+	userLinkData := make([]c.UserLinkData, 0)
+
+	if userLoggedIn && user.Username == username {
+		multipleLinkData.User = user
+		userLinkData = d.GetRecentLoggedInSavedLinks(1, user.UserId)
+	}
+	multipleLinkData.UserLinkData = userLinkData
+	multipleLinkData.UserState = c.Saved
+	return multipleLinkData
+}
+
+func getUserSettings(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData) {
+	if userLoggedIn && user.Username == username {
+		multipleLinkData.User = user
+		multipleLinkData.ErrorText = "todo"
+	}
+	multipleLinkData.UserState = c.Settings
+	return multipleLinkData
+
+}
+
+func userHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData)) {
+	var multipleLinkData c.MultipleLinkData
 	username, err := extractUsername(r)
 
 	if err != nil {
@@ -233,26 +276,12 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userLinkData = make([]c.UserLinkData, 0, len(posts))
-
 	user, ok := s.GetUserCookie(r)
-	if ok {
-		homeData.User = user
-		userLinkData = d.GetRecentLoggedInLinksByUsername(1, user.UserId, username)
-	} else {
-		posts = d.GetRecentLinksByUsername(1, username)
-		for _, post := range posts {
-			userLinkDataItem := c.UserLinkData{Link: post}
-			userLinkData = append(userLinkData, userLinkDataItem)
-		}
-	}
+	multipleLinkData = linkRetriever(user, ok, username)
+	multipleLinkData.Path = username
+	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
-	homeData.UserLinkData = userLinkData
-	homeData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
-	homeData.ErrorText = r.Header.Get("ErrorText")
-	homeData.Path = r.URL.Path
-
-	if err := tmpl["user"].ExecuteTemplate(w, "base", homeData); err != nil {
+	if err := tmpl["user"].ExecuteTemplate(w, "base", multipleLinkData); err != nil {
 		log.Printf("userHandler err: %v", err)
 	}
 }
@@ -422,14 +451,15 @@ func main() {
 	tmpl = make(map[string]*template.Template)
 
 	homeTemp := template.New("home").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
-	tmpl["home"] = template.Must(homeTemp.ParseFiles("static/home.html", "static/base.html", "static/linkActions.html"))
+	tmpl["home"] = template.Must(homeTemp.ParseFiles("static/home.html", "static/base.html", "static/links.html", "static/linkActions.html"))
 	tmpl["edit"] = template.Must(template.ParseFiles("static/edit.html", "static/base.html"))
 	viewTemp := template.New("view").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
 	tmpl["view"] = template.Must(viewTemp.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html"))
 	tmpl["login"] = template.Must(template.ParseFiles("static/login.html", "static/base.html"))
 	tmpl["faq"] = template.Must(template.ParseFiles("static/faq.html", "static/base.html"))
 	userTemp := template.New("home").Funcs(template.FuncMap{"LinkWrap": LinkWrap})
-	tmpl["user"] = template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/linkActions.html"))
+	tmpl["user"] = template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/links.html", "static/linkActions.html"))
+	tmpl["userSaved"] = template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/links.html", "static/linkActions.html"))
 
 	router := http.NewServeMux()
 
@@ -438,10 +468,27 @@ func main() {
 	router.HandleFunc("/", homeHandler)
 	router.HandleFunc("GET /login/", loginHandler)
 	router.HandleFunc("POST /login/", loginPostHandler)
-	router.HandleFunc("/u/{username}/", userHandler)
+	router.HandleFunc("GET /u/{username}/", func(w http.ResponseWriter, r *http.Request) {
+		userHandler(w, r, getUserLinks)
+	})
+	router.HandleFunc("POST /u/{username}/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+	})
 	loggedInRouter := http.NewServeMux()
 	loggedInRouter.HandleFunc("GET /r/{id}/submit/", editHandler)
 	loggedInRouter.HandleFunc("POST /r/{id}/submit/", saveHandler)
+	loggedInRouter.HandleFunc("GET /u/{username}/saved/", func(w http.ResponseWriter, r *http.Request) {
+		userHandler(w, r, getUserSavedLinks)
+	})
+	loggedInRouter.HandleFunc("POST /u/{username}/saved/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+	})
+	loggedInRouter.HandleFunc("GET /u/{username}/settings/", func(w http.ResponseWriter, r *http.Request) {
+		userHandler(w, r, getUserSettings)
+	})
+	loggedInRouter.HandleFunc("POST /u/{username}/settings/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+	})
 	router.HandleFunc("/r/{id}/", viewHandler)
 	router.HandleFunc("POST /logout/", logoutHandler)
 	router.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
@@ -463,6 +510,10 @@ func main() {
 	)
 
 	router.Handle("/r/{id}/submit/", strict(loggedInRouter))
+	router.Handle("GET /u/{username}/saved/", strict(loggedInRouter))
+	router.Handle("POST /u/{username}/saved/", strict(loggedInRouter))
+	router.Handle("GET /u/{username}/settings/", strict(loggedInRouter))
+	router.Handle("POST /u/{username}/settings/", strict(loggedInRouter))
 
 	server := http.Server{
 		Addr:    ":8090",

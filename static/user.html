@@ -9,18 +9,26 @@
 
 {{define "body"}}
 <div class="flex justify-center items-center flex-col pt-20">
-    {{$CommenteerUrl := .CommenteerUrl}}
-    {{$UserCookie := .User}}
-    {{range $i, $a := .UserLinkData}}
-    <div class="">
-        <a href="/r/{{.QueryId}}">
-            <img class="shadow-md" id="{{.QueryId}}" src="{{.CdnUrl}}" alt="{{.ImageUrl}}" {{if gt .ImageWidth 0}}
-                width={{.ImageWidth}}{{end}} {{if gt .ImageHeight 1}} height={{.ImageHeight}}{{end}} {{ if gt $i
-                1}}loading="lazy" {{end}} />
-        </a>
-        {{template "linkActions" (LinkWrap $CommenteerUrl $a $UserCookie)}}
+    <div class="flex gap-4 mb-10">
+        <form action="/{{.Path}}/" method="post">
+            <button id="user-posts" type="submit" 
+            class='{{if eq .UserState "posts"}}bg-slate-500 text-white font-bold py-2 px-4 rounded{{end}}' onclick="updateState(this);">posts</button>
+        </form>
+        {{ if .User }}
+        {{ if eq .User.Username .Path}}
+        <form action="/{{.Path}}/saved/" method="post">
+            <button id="user-saved" type="submit" class='{{if eq .UserState "saved"}}bg-slate-500 text-white font-bold py-2 px-4 rounded{{end}}' onclick="updateState(this);">saved</button>
+        </form>
+        <form action="/{{.Path}}/settings/" method="post">
+            <button id="user-settings" type="submit" class='{{if eq .UserState "settings"}}bg-slate-500 text-white font-bold py-2 px-4 rounded{{end}}' onclick="updateState(this);">settings</button>
+        </form>
+        {{ end }}
+        {{ end }}
     </div>
-    {{end}}
+    <span>
+        {{.ErrorText}}
+    </span>
+    {{template "links" .}}
 </div>
 <div id="clipboard-note" class="fixed inset-left-0 bottom-0 z-10 bg-blue-300 flex mb-10 ml-4 shadow-md invisible">
     <span class="px-8 py-4">

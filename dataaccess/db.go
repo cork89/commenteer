@@ -59,27 +59,39 @@ WHERE l.cdn_image_url != '' ORDER BY l.created_date DESC LIMIT 10 OFFSET ($1);`,
 	return links
 }
 
-func (d Db) GetRecentLinksByUsername(page int, username string) (links []c.Link) {
+func (d Db) GetRecentLinksByUsername(page int, username string) (links []c.Link, userExists bool) {
+	row := dbpool.QueryRow(context.Background(), `
+SELECT u.user_id
+FROM users u
+WHERE u.username = ($1)`, username)
+	var userId int
+	err := row.Scan(&userId)
+	if err != nil {
+		log.Printf("User does not exist, %v", err)
+		return nil, false
+	}
+
 	offset := (page - 1) * 10
 	rows, err := dbpool.Query(context.Background(), `
 SELECT l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, l.cdn_image_height, l.cdn_image_width
 FROM links l, users u
-WHERE l.cdn_image_url != '' AND l.user_id = u.user_id AND u.username = ($1)
- ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, username, offset)
+WHERE l.cdn_image_url != '' AND l.user_id = u.user_id AND u.user_id = ($1)
+ ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
 	// return handleRetrieve(rows, err)
 	if err != nil {
 		log.Printf("Error retrieving recent links, %v", err)
+		return nil, true
 	}
 	for rows.Next() {
 		var link c.Link
 		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &link.ImageHeight, &link.ImageWidth)
 		if err != nil {
 			log.Printf("Scan error: %v\n", err)
-			return links
+			return links, true
 		}
 		links = append(links, link)
 	}
-	return links
+	return links, true
 }
 
 func (d Db) GetRecentLoggedInLinks(page int, userId int) (links []c.UserLinkData) {
@@ -94,6 +106,32 @@ ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
 
 	if err != nil {
 		log.Printf("Error retrieving recent links, %v", err)
+	}
+	for rows.Next() {
+		var link c.Link
+		var userAction c.UserAction
+		err := rows.Scan(&link.CdnUrl, &link.UserId, &link.ImageUrl, &link.QueryId, &link.LinkId, &link.ImageHeight, &link.ImageWidth, &userAction.Active)
+		if err != nil {
+			log.Printf("Scan error: %v\n", err)
+			return links
+		}
+		links = append(links, c.UserLinkData{Link: link, UserAction: &userAction})
+	}
+	return links
+}
+
+func (d Db) GetRecentLoggedInSavedLinks(page int, userId int) (links []c.UserLinkData) {
+	offset := (page - 1) * 10
+	rows, err := dbpool.Query(context.Background(), `
+select l.cdn_image_url, l.user_id, l.image_url, l.query_id, l.link_id, l.cdn_image_height, l.cdn_image_width, ua.active
+from links l
+INNER JOIN useractions ua 
+	ON ua.user_id = ($1) AND ua.target_id = l.link_id AND ua.action_type = 'like' AND ua.target_type = 'link' AND ua.active = true
+WHERE l.cdn_image_url != ''
+ORDER BY l.created_date DESC LIMIT 10 OFFSET ($2);`, userId, offset)
+
+	if err != nil {
+		log.Printf("Error retrieving recent saved links, %v", err)
 	}
 	for rows.Next() {
 		var link c.Link
