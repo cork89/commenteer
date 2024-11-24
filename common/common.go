@@ -105,11 +105,24 @@ type MultipleLinkData struct {
 	UserState     UserState
 }
 
+type ParamData struct {
+	Cmt string
+}
+
 type SingleLinkData struct {
 	*User
 	UserLinkData
 	RedditRequest string
 	CommenteerUrl string
+	Params        ParamData
+}
+
+type LinkStyle struct {
+	LinkStyleId int
+	LinkId      int
+	QueryId     string
+	Key         string
+	Value       string
 }
 
 type HttpContext string

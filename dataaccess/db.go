@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	c "main/common"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -365,6 +366,72 @@ DO UPDATE SET active = NOT useractions.active`
 		return false
 	}
 	return true
+}
+
+func (d Db) GetLinkId(queryId string) (linkId int, err error) {
+	row := dbpool.QueryRow(context.Background(), `
+SELECT l.link_id
+FROM links l
+WHERE l.query_id = ($1)`, queryId)
+	err = row.Scan(&linkId)
+	return linkId, err
+}
+
+func (d Db) AddLinkStyles(linkStyles []c.LinkStyle) bool {
+	linkId, err := d.GetLinkId(linkStyles[0].QueryId)
+
+	if err != nil {
+		log.Printf("failed to retrieve link id, %v", err)
+		return false
+	}
+
+	query := `
+INSERT INTO linkstyle (link_id, style_key, style_value)
+VALUES %s
+ON CONFLICT (link_id, style_key) DO UPDATE
+SET style_value = EXCLUDED.style_value`
+
+	values := []string{}
+	args := []interface{}{}
+	argIdx := 1
+
+	for _, linkStyle := range linkStyles {
+		values = append(values, fmt.Sprintf("($%d, $%d, $%d)", argIdx, argIdx+1, argIdx+2))
+		args = append(args, linkId, linkStyle.Key, linkStyle.Value)
+		argIdx += 3
+	}
+
+	fullQuery := fmt.Sprintf(query, strings.Join(values, ","))
+
+	_, err = dbpool.Exec(context.Background(), fullQuery, args...)
+
+	if err != nil {
+		log.Printf("Failed to add link styles, err=%v\n", err)
+		return false
+	}
+	return true
+}
+
+func (d Db) GetLinkStyles(linkId int) (linkStyles []c.LinkStyle, err error) {
+	rows, err := dbpool.Query(context.Background(), `
+SELECT ls.link_style_id, ls.link_id, ls.style_key, ls.style_value
+FROM linkstyle ls
+WHERE ls.link_id = ($1);`, linkId)
+
+	if err != nil {
+		log.Printf("Error retrieving linkstyles for link_id=%d, err= %v", linkId, err)
+	}
+	linkStyles = make([]c.LinkStyle, 0)
+	for rows.Next() {
+		var linkStyle c.LinkStyle
+		err := rows.Scan(&linkStyle.LinkStyleId, &linkStyle.LinkId, &linkStyle.Key, &linkStyle.Value)
+		if err != nil {
+			log.Printf("Scan error: %v\n", err)
+			return linkStyles, err
+		}
+		linkStyles = append(linkStyles, linkStyle)
+	}
+	return linkStyles, nil
 }
 
 func init() {

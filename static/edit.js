@@ -1,5 +1,8 @@
 var commentState = 1
 
+/**
+ * @param {string} commenteerUrl 
+ */
 async function takeScreenshot(commenteerUrl) {
     // let data;
     // html2canvas(document.querySelector(".image-comment-container"), { allowTaint: true, useCORS: true }).then(canvas => {
@@ -30,6 +33,7 @@ async function takeScreenshot(commenteerUrl) {
         imgData: imgData,
         height: canvas.height,
         width: canvas.width,
+        params: window.location.search,
     }
     const res = await fetch(url, {
         headers: headers,
@@ -57,10 +61,22 @@ function download(data) {
     link.click();
 }
 
+/**
+ * @param {number} newState
+ */
+function initState(newState) {
+    commentState = newState
+    console.log("initState", newState)
+}
+
+/**
+ * @param {number} newState
+ */
 function overlayComments(newState) {
     if (newState == commentState) {
         return
     }
+    const params = new URLSearchParams(window.location.search)
     const icc = document.getElementById("icc")
     const cc = document.getElementById("cc")
     const cs = document.getElementById(`oc${commentState}`)
@@ -77,19 +93,23 @@ function overlayComments(newState) {
         icc.classList.add("image-comment-container")
         cc.classList.add("comment-container")
         ns.classList.add("target")
+        params.set("cmt", "outer")
     }
 
     if (newState == 2) {
         icc.classList.add("image-comment-container-rel")
         cc.classList.add("comment-container-bot")
         ns.classList.add("target")
+        params.set("cmt", "bottom")
     }
 
     if (newState == 3) {
         icc.classList.add("image-comment-container-rel")
         cc.classList.add("comment-container-top")
         ns.classList.add("target")
+        params.set("cmt", "top")
     }
 
     commentState = newState
+    window.history.pushState(null, "", `?${params.toString()}`)
 }

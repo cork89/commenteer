@@ -57,6 +57,35 @@ var imageInfo struct {
 	ImgData string `json:"imgData"`
 	Width   int    `json:"width"`
 	Height  int    `json:"height"`
+	Params  string `json:"params"`
+}
+
+func saveParams(params string, queryId string) {
+	if len(params) == 0 {
+		return
+	}
+	minusQ := strings.TrimPrefix(params, "?")
+	if minusQ == params {
+		return
+	}
+	paramList := strings.Split(minusQ, "&")
+
+	linkStyles := make([]c.LinkStyle, 0, len(paramList))
+
+	for _, val := range paramList {
+		if !strings.Contains(val, "=") {
+			continue
+		}
+		parameter := strings.Split(val, "=")
+		linkStyle := c.LinkStyle{QueryId: queryId, Key: parameter[0], Value: parameter[1]}
+		linkStyles = append(linkStyles, linkStyle)
+	}
+	if len(linkStyles) > 0 {
+		ok := d.AddLinkStyles(linkStyles)
+		if !ok {
+			log.Printf("Failed to save style query params for %s\n", queryId)
+		}
+	}
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +114,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	go saveParams(imageInfo.Params, redditRequest.AsString())
 
 	b64, err := base64.StdEncoding.DecodeString(imageInfo.ImgData)
 	if err != nil {
@@ -139,11 +170,29 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	query := r.URL.Query()
+	before := r.URL.String()
+	var params c.ParamData
 
+	linkStyles, err := d.GetLinkStyles(data.LinkId)
+	if err == nil && len(linkStyles) > 0 {
+		for _, linkStyle := range linkStyles {
+			query.Set(linkStyle.Key, linkStyle.Value)
+			if linkStyle.Key == "cmt" {
+				params.Cmt = linkStyle.Value
+			}
+		}
+		r.URL.RawQuery = query.Encode()
+		after := r.URL.String()
+		if before != after {
+			http.Redirect(w, r, after, http.StatusFound)
+		}
+	}
 	singleLinkData.UserLinkData = c.UserLinkData{Link: *data}
 	singleLinkData.User = user
 	singleLinkData.RedditRequest = redditRequest.AsString()
 	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+	singleLinkData.Params = params
 
 	if err := tmpl["edit"].ExecuteTemplate(w, "base", singleLinkData); err != nil {
 		log.Printf("editHandler err: %v", err)
@@ -224,14 +273,14 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getUserLinks(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData) {
+func getUserLinks(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData, redirect bool) {
 	userLinkData := make([]c.UserLinkData, 0)
 
 	if userLoggedIn {
 		multipleLinkData.User = user
 	}
 	if userLoggedIn && user.Username == username {
-		userLinkData = d.GetRecentLoggedInLinks(1, user.UserId)
+		userLinkData = d.GetRecentLoggedInLinksByUsername(1, user.UserId, username)
 	} else {
 		posts, userExists := d.GetRecentLinksByUsername(1, username)
 		if !userExists {
@@ -245,32 +294,36 @@ func getUserLinks(user *c.User, userLoggedIn bool, username string) (multipleLin
 	}
 	multipleLinkData.UserLinkData = userLinkData
 	multipleLinkData.UserState = c.Posts
-	return multipleLinkData
+	return multipleLinkData, false
 }
 
-func getUserSavedLinks(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData) {
+func getUserSavedLinks(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData, redirect bool) {
 	userLinkData := make([]c.UserLinkData, 0)
 
 	if userLoggedIn && user.Username == username {
 		multipleLinkData.User = user
 		userLinkData = d.GetRecentLoggedInSavedLinks(1, user.UserId)
+	} else {
+		redirect = true
 	}
 	multipleLinkData.UserLinkData = userLinkData
 	multipleLinkData.UserState = c.Saved
-	return multipleLinkData
+	return multipleLinkData, redirect
 }
 
-func getUserSettings(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData) {
+func getUserSettings(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData, redirect bool) {
 	if userLoggedIn && user.Username == username {
 		multipleLinkData.User = user
 		multipleLinkData.ErrorText = "todo"
+	} else {
+		redirect = true
 	}
 	multipleLinkData.UserState = c.Settings
-	return multipleLinkData
+	return multipleLinkData, redirect
 
 }
 
-func userHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData)) {
+func userHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user *c.User, userLoggedIn bool, username string) (multipleLinkData c.MultipleLinkData, redirect bool)) {
 	var multipleLinkData c.MultipleLinkData
 	username, err := extractUsername(r)
 
@@ -286,12 +339,12 @@ func userHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user
 		user, ok = s.GetUserCookie(r)
 	}
 
-	if ok && user.Username != username {
+	multipleLinkData, redirect := linkRetriever(user, ok, username)
+	if redirect {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	multipleLinkData = linkRetriever(user, ok, username)
 	multipleLinkData.Path = username
 	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
@@ -485,6 +538,7 @@ func main() {
 		userHandler(w, r, getUserLinks)
 	})
 	router.HandleFunc("POST /u/{username}/", func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.URL.Path)
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	})
 	loggedInRouter := http.NewServeMux()

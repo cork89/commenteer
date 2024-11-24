@@ -14,11 +14,20 @@
 <div class="flex align-items justify-center">
     <div class="mt-20 max-w-full">
         <!-- <div class="container"> -->
-        <div id="icc" class="image-comment-container border-2 border-solid border-slate-500">
+        {{$cmt := .Params.Cmt}}
+        <script>
+            if ("{{$cmt}}" == "bottom") {
+                overlayComments(2)
+            } else if ("{{$cmt}}" == "top") {
+                overlayComments(3)
+            }
+        </script>
+        <div id="icc"
+            class='image-comment-container border-2 border-solid border-slate-500'>
             <div class="flex justify-center">
                 <img src="{{.ProxyUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
             </div>
-            <div id="cc" class="comment-container mt-4">
+            <div id="cc" class='comment-container mt-4'>
                 {{range $i, $comment := .RedditComments}}
                 {{ if gt $i 0 }}
                 <ul class="d{{$i}} w-11/12 ml-auto">
@@ -35,21 +44,21 @@
         <div
             class="flex bg-white border-2 border-solid border-slate-500 rounded-md shadow-sm mb-6 mt-1 pl-2 py-2 max-w-screen-lg">
             <div class="overlay-comments flex-1 gap-4">
-                <button id="oc1" class="hover:bg-slate-300 active:bg-slate-500 target rounded-full p-2" active>
+                <button id="oc1" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2 target'>
                     <svg class="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg" onclick="overlayComments(1);">
                         <rect x="1" y="1" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" />
                         <rect x="1.5" y="19.5" width="17" height="2" rx="0.5" stroke="currentColor" />
                     </svg>
                 </button>
-                <button id="oc2" class="hover:bg-slate-300 active:bg-slate-500 rounded-full p-2">
+                <button id="oc2" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2'>
                     <svg class="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg" onclick="overlayComments(2);">
                         <rect x="1" y="1" width="18" height="20" rx="2" stroke="currentColor" stroke-width="2" />
                         <rect x="3.5" y="16.5" width="13" height="2" rx="0.5" stroke="currentColor" />
                     </svg>
                 </button>
-                <button id="oc3" class="hover:bg-slate-300 active:bg-slate-500 rounded-full p-2">
+                <button id="oc3" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2'>
                     <svg class="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg" onclick="overlayComments(3);">
                         <rect x="1" y="1" width="18" height="20" rx="2" stroke="currentColor" stroke-width="2" />
@@ -59,7 +68,9 @@
             </div>
             <button id="publish"
                 class="flex-shrink-0 ml-auto mr-2 bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
-                onclick="takeScreenshot('{{.CommenteerUrl}}');">Publish</button>
+                onclick="takeScreenshot('{{.CommenteerUrl}}');">
+                Publish
+            </button>
         </div>
     </div>
 </div>

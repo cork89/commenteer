@@ -81,6 +81,14 @@ func (l Local) UpdateUserActionActive(userAction c.UserAction) bool {
 	return true
 }
 
+func (l Local) AddLinkStyles(linkStyles []c.LinkStyle) bool {
+	return true
+}
+
+func (l Local) GetLinkStyles(linkId int) (linkStyles []c.LinkStyle, err error) {
+	return make([]c.LinkStyle, 0), nil
+}
+
 func init() {
 	links = make(map[string]c.Link)
 	users = make(map[string]c.User)

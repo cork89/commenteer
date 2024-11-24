@@ -25,6 +25,8 @@ type DataAccess interface {
 	DecrementUserUploadCount(userId int) bool
 	RefreshUserUploadCount(userId int, newCount int) bool
 	AddUserAction(userAction c.UserAction) bool
+	AddLinkStyles(linkStyles []c.LinkStyle) bool
+	GetLinkStyles(linkId int) (linkStyles []c.LinkStyle, err error)
 }
 
 func GetLinks() (linkJson map[string]c.Link) {
@@ -89,6 +91,14 @@ func RefreshUserUploadCount(userId int, newCount int) bool {
 
 func AddUserAction(userAction c.UserAction) bool {
 	return dataAccess.AddUserAction(userAction)
+}
+
+func AddLinkStyles(linkStyles []c.LinkStyle) bool {
+	return dataAccess.AddLinkStyles(linkStyles)
+}
+
+func GetLinkStyles(linkId int) (linkStyles []c.LinkStyle, err error) {
+	return dataAccess.GetLinkStyles(linkId)
 }
 
 func Initialize(dataAccessType string) {
