@@ -14,16 +14,7 @@
 <div class="flex align-items justify-center">
     <div class="mt-20 max-w-full">
         <!-- <div class="container"> -->
-        {{$cmt := .Params.Cmt}}
-        <script>
-            if ("{{$cmt}}" == "bottom") {
-                overlayComments(2)
-            } else if ("{{$cmt}}" == "top") {
-                overlayComments(3)
-            }
-        </script>
-        <div id="icc"
-            class='image-comment-container border-2 border-solid border-slate-500'>
+        <div id="icc" class='image-comment-container border-2 border-solid border-slate-500'>
             <div class="flex justify-center">
                 <img src="{{.ProxyUrl}}" alt="{{.ImageUrl}}" loading="lazy" />
             </div>
@@ -43,7 +34,8 @@
         <!-- </div> -->
         <div
             class="flex bg-white border-2 border-solid border-slate-500 rounded-md shadow-sm mb-6 mt-1 pl-2 py-2 max-w-screen-lg">
-            <div class="overlay-comments flex-1 gap-4">
+            <!-- <div class="overlay-comments flex-1 gap-4"> -->
+            <div class="overlay-comments">
                 <button id="oc1" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2 target'>
                     <svg class="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg" onclick="overlayComments(1);">
@@ -66,12 +58,114 @@
                     </svg>
                 </button>
             </div>
+            <div class="border-l-2 border-l-slate-300 overlay-comments ml-4 pl-4">
+                <button id="bw1" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2 target'
+                    onclick="borderWidth(1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+                    </svg>
+                </button>
+                <button id="bw2" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2'
+                    onclick="borderWidth(2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+                    </svg>
+                </button>
+                <button id="bw3" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2'
+                    onclick="borderWidth(3);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+                    </svg>
+                </button>
+                <div id="bc-container"
+                    class="absolute bg-white p-2 border-2 border-solid border-slate-500 rounded-md invisible ml-10">
+                    <button id="bc-slate" onclick="borderColor(1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#64748B" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
+                        </svg>
+                    </button>
+                    <button id="bc-red" onclick="borderColor(2);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#EF4444" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
+                        </svg>
+                    </button>
+                    <button id="bc-blue" onclick="borderColor(3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#1D4ED8" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
+                        </svg>
+                    </button>
+                    <button id="bc-green" onclick="borderColor(4);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#16A34A" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
+                        </svg>
+                    </button>
+                    <button id="bc-yellow" onclick="borderColor(5);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#EAB308" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
+                        </svg>
+                    </button>
+                </div>
+                <button class="relative" id="border-color" onclick="openBorderColors();">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="#64748B" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="border-l-2 border-l-slate-300 overlay-comments ml-4 pl-4">
+                <select name="font" id="font-select" class="align-middle border-1 border-slate-500"
+                    onchange="changeFont(this);">
+                    <option value="1" style="font-family: Arial;">Arial</option>
+                    <option value="2" style="font-family: 'Brush Script MT', cursive;">Brush Script MT
+                    </option>
+                    <option value="3" style="font-family: 'Verdana', sans-serif;">Verdana</option>
+                    <option value="4" style="font-family: 'Times New Roman', serif;">Times New Roman</option>
+                </select>
+                <button id="font-bold" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2' onclick="boldFont();">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linejoin="round"
+                            d="M6.75 3.744h-.753v8.25h7.125a4.125 4.125 0 0 0 0-8.25H6.75Zm0 0v.38m0 16.122h6.747a4.5 4.5 0 0 0 0-9.001h-7.5v9h.753Zm0 0v-.37m0-15.751h6a3.75 3.75 0 1 1 0 7.5h-6m0-7.5v7.5m0 0v8.25m0-8.25h6.375a4.125 4.125 0 0 1 0 8.25H6.75m.747-15.38h4.875a3.375 3.375 0 0 1 0 6.75H7.497v-6.75Zm0 7.5h5.25a3.75 3.75 0 0 1 0 7.5h-5.25v-7.5Z" />
+                    </svg>
+                </button>
+                <button id="font-italic" class='hover:bg-slate-300 active:bg-slate-500 rounded-full p-2' onclick="italicFont();">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M5.248 20.246H9.05m0 0h3.696m-3.696 0 5.893-16.502m0 0h-3.697m3.697 0h3.803" />
+                    </svg>
+                </button>
+            </div>
             <button id="publish"
-                class="flex-shrink-0 ml-auto mr-2 bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+                class="ml-auto mr-2 bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
                 onclick="takeScreenshot('{{.CommenteerUrl}}');">
-                Publish
+                publish
             </button>
+            <!--flex-shrink-0 ml-auto-->
         </div>
     </div>
+</div>
+<script>
+    const params = JSON.parse('{{.Params}}')
+    applyParams(params)
+</script>
+<div
+    class="border-4 border-8 border-red-700 border-sky-500 border-blue-700 border-emerald-700 border-yellow-500 invisible">
 </div>
 {{end}}

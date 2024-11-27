@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -106,7 +107,17 @@ type MultipleLinkData struct {
 }
 
 type ParamData struct {
-	Cmt string
+	Cmt    string `json:"cmt"`
+	Brd    string `json:"brd"`
+	Bc     string `json:"bc"`
+	Font   string `json:"font"`
+	Bold   string `json:"bold"`
+	Italic string `json:"italic"`
+}
+
+func (pd ParamData) ToJson() (string, error) {
+	rslt, err := json.Marshal(pd)
+	return string(rslt), err
 }
 
 type SingleLinkData struct {
@@ -114,7 +125,7 @@ type SingleLinkData struct {
 	UserLinkData
 	RedditRequest string
 	CommenteerUrl string
-	Params        ParamData
+	Params        string
 }
 
 type LinkStyle struct {

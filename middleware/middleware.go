@@ -54,7 +54,7 @@ func IsLoggedInStrict(next http.Handler) http.Handler {
 			r = r.Clone(ctx)
 			next.ServeHTTP(w, r)
 		} else {
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "/login/", http.StatusTemporaryRedirect)
 		}
 	})
 }

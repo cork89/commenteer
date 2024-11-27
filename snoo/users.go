@@ -165,14 +165,14 @@ func GetUserData(accessToken AccessTokenBody) (user common.User) {
 		log.Printf("error reading response body, %v\n", err)
 	}
 	err = json.Unmarshal(body, &userResponse)
-
 	if err != nil {
-		log.Printf("error unmarshalling body: %v\n", err)
+		log.Printf("error unmarshalling body: %v, err: %v", string(body), err)
+		user.IconUrl = fmt.Sprintf("%s/static/avatar_default.webp", os.Getenv("COMMENTEER_URL"))
+	} else {
+		user.IconUrl = strings.Replace(userResponse.Data.IconImg, "&amp;", "&", -1)
 	}
 
 	user.Username = userResponse.Data.Username
-	iconUrl := strings.Replace(userResponse.Data.IconImg, "&amp;", "&", -1)
-	user.IconUrl = iconUrl
 	user.AccessToken = accessToken.AccessToken
 	user.RefreshExpireDtTm = accessToken.GetExpireDtTm()
 	user.RefreshToken = accessToken.RefreshToken

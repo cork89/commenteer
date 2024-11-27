@@ -108,6 +108,18 @@ body {
     background-color: rgb(203 213 225 / var(--tw-bg-opacity)) /* #cbd5e1 */;
 }
 
+.edit-container {
+    display: flex;
+}
+/* 
+.edit-container > div:first-child {
+    margin-right: auto;
+}
+
+.edit-container > div:last-child {
+    margin-left: auto;
+} */
+
 img {
     display: block;
     margin-bottom: -5px;
@@ -262,6 +274,12 @@ ul>li.comment {
 }
 
 .user button {
+    display: inline-block;
+    vertical-align: middle;
+    margin-top: 1em;
+}
+
+.overlay-comment select {
     display: inline-block;
     vertical-align: middle;
     margin-top: 1em;

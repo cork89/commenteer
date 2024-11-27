@@ -180,6 +180,16 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 			query.Set(linkStyle.Key, linkStyle.Value)
 			if linkStyle.Key == "cmt" {
 				params.Cmt = linkStyle.Value
+			} else if linkStyle.Key == "brd" {
+				params.Brd = linkStyle.Value
+			} else if linkStyle.Key == "bc" {
+				params.Bc = linkStyle.Value
+			} else if linkStyle.Key == "font" {
+				params.Font = linkStyle.Value
+			} else if linkStyle.Key == "bold" {
+				params.Bold = linkStyle.Value
+			} else if linkStyle.Key == "italic" {
+				params.Italic = linkStyle.Value
 			}
 		}
 		r.URL.RawQuery = query.Encode()
@@ -192,7 +202,13 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	singleLinkData.User = user
 	singleLinkData.RedditRequest = redditRequest.AsString()
 	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
-	singleLinkData.Params = params
+	paramsJson, err := params.ToJson()
+	if err != nil {
+		log.Printf("failed to marshal edit params, err: %v\n", err)
+		singleLinkData.Params = "{}"
+	} else {
+		singleLinkData.Params = paramsJson
+	}
 
 	if err := tmpl["edit"].ExecuteTemplate(w, "base", singleLinkData); err != nil {
 		log.Printf("editHandler err: %v", err)
@@ -209,6 +225,8 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	user, ok := ctx.Value(c.UserCtx).(*c.User)
 	if !ok {
 		log.Println("user context missing")
+	} else {
+		singleLinkData.User = user
 	}
 
 	redditRequest, err := extractRedditRequest(r)
@@ -221,8 +239,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 		data = <-link
 	}
 
-	if ok {
-		singleLinkData.User = user
+	if ok && data.UserId == user.UserId {
 		userLinkData, ok = d.GetLoggedInLink(*redditRequest, user.UserId)
 		if !ok {
 			userLinkData = &c.UserLinkData{Link: *data}
@@ -230,12 +247,10 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		userLinkData = &c.UserLinkData{Link: *data}
 	}
-
 	singleLinkData.UserLinkData = *userLinkData
 	singleLinkData.RedditRequest = redditRequest.AsString()
 	singleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
 
-	// user, _ := s.GetUserCookie(r)
 	if err = tmpl["view"].ExecuteTemplate(w, "base", singleLinkData); err != nil {
 		log.Printf("viewHandler err: %v", err)
 	}
