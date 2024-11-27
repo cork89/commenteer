@@ -170,6 +170,11 @@ function borderColor(newState) {
         closeBorderColors()
         return
     }
+
+    if (!Object.keys(borderColors).includes(newState)) {
+        newState = 1
+    }
+
     const params = new URLSearchParams(window.location.search)
     const icc = document.getElementById("icc")
     const bc = document.getElementById("border-color")
@@ -204,13 +209,18 @@ function openBorderColors() {
 const fonts = { 1: "Arial", 2: "'Brush Script MT', cursive", 3: "'Verdana', sans-serif", 4: "'Times New Roman', serif" }
 
 /**
- * @param {number} newState
+ * @param {HTMLElement} event
  */
 function changeFont(event) {
-    const newState = event.selectedIndex + 1
+    let newState = event.selectedIndex + 1
     if (newState == fontState) {
         return
     }
+    if (!Object.keys(fonts).includes(`${newState}`)) {
+        event.selectedIndex = 0
+        newState = 1
+    }
+
     const params = new URLSearchParams(window.location.search)
     const icc = document.getElementById("icc")
     icc.style.fontFamily = fonts[newState]
