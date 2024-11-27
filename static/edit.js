@@ -171,7 +171,7 @@ function borderColor(newState) {
         return
     }
 
-    if (!Object.keys(borderColors).includes(newState)) {
+    if (!Object.keys(borderColors).includes(`${newState}`)) {
         newState = 1
     }
 
