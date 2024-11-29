@@ -34,6 +34,8 @@ func TestHomeHandler_UserLoggedOut(t *testing.T) {
 }
 
 func TestHomeHandler_UserNotInContext(t *testing.T) {
+	t.Setenv("REDDIT_JWT_SECRET", "secret")
+	t.Setenv("DATA_ACCESS_TYPE", "local")
 	Initialize("valid")
 	Templates.Set("home", template.New("home"))
 
@@ -44,8 +46,6 @@ func TestHomeHandler_UserNotInContext(t *testing.T) {
 	r, _ := http.NewRequest("GET", testURL, body)
 	cookie := snoo.CreateUserCookie(testUser1.UserCookie)
 	r.AddCookie(&cookie)
-	// ctx := context.WithValue(r.Context(), common.UserCtx, &testUser1)
-	// r = r.Clone(ctx)
 	dataaccess.Initialize("local")
 	dataaccess.AddUser(testUser1)
 
