@@ -28,7 +28,7 @@
         <!-- </form> -->
         <div class="ml-4 mt-2">
             <div id="linkError">
-                {{.ErrorText}}{{if .ErrorText}} see <a class="md:underline" href="/static/AllowedSubreddits.txt">allowed
+                {{.ErrorText}}{{if eq .ErrorType "subreddit"}} see <a class="md:underline" href="/static/AllowedSubreddits.txt">allowed
                     subreddits.</a>{{end}}
             </div>
             <span>remaining uploads: {{.User.RemainingUploads}}</span>

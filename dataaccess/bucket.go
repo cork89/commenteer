@@ -22,7 +22,9 @@ var accessKeySecret string
 var bucketName string
 var client *s3.Client
 
-func UploadImage(img io.Reader, fileName string) (*string, error) {
+type RealBucketUploader struct{}
+
+func (r RealBucketUploader) UploadImage(img io.Reader, fileName string) (*string, error) {
 	uploader := manager.NewUploader(client)
 	output, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket:          aws.String(bucketName),
@@ -40,7 +42,7 @@ func UploadImage(img io.Reader, fileName string) (*string, error) {
 	return &output.Location, nil
 }
 
-func init() {
+func (r RealBucketUploader) InitializeBucket() {
 	err := godotenv.Load("/run/secrets/.env.local")
 	if err != nil {
 		log.Println(err)

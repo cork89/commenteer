@@ -76,10 +76,7 @@ func CreateUserJwt(user common.UserCookie) string {
 	if err != nil {
 		log.Printf("failed to create jwt signer: %v\n", err)
 	}
-	fmt.Println(clock.Now())
-	fmt.Println(clock.Now().UTC())
 	tm := clock.Now().UTC().Add(time.Hour * time.Duration(24))
-	fmt.Println(tm.Unix())
 	claims := &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(tm),
 		Subject:   user.Username,

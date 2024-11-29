@@ -9,7 +9,11 @@ function validateLink() {
         document.getElementById("linkError").innerText = error;
     } else {
         let [subreddit, article, comment] = getLinkTokens(url.value)
-        window.location.href = `/r/${subreddit}-${article}-${comment}/submit`
+        if (subreddit == undefined || article == undefined || comment == undefined) {
+            document.getElementById("linkError").innerText = "Not a properly formatted reddit link";
+        } else {
+            window.location.href = `/r/${subreddit}-${article}-${comment}/submit`
+        }
     }
 }
 

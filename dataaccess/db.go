@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
 )
 
 var dbpool *pgxpool.Pool
@@ -434,12 +433,7 @@ WHERE ls.link_id = ($1);`, linkId)
 	return linkStyles, nil
 }
 
-func init() {
-	err := godotenv.Load("/run/secrets/.env.local")
-	if err != nil {
-		log.Println(err)
-	}
-
+func (d Db) InitializeDb() {
 	postgresUser := os.Getenv("POSTGRES_USER")
 	postgresPw := os.Getenv("POSTGRES_PASSWORD")
 	postgresHost := os.Getenv("POSTGRES_HOST")

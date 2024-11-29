@@ -1,12 +1,14 @@
 package dataaccess
 
 import (
+	"io"
 	"log"
 	c "main/common"
 	"time"
 )
 
 var dataAccess DataAccess
+var bucketUploader BucketUploader
 
 type DataAccess interface {
 	GetLinks() map[string]c.Link
@@ -27,6 +29,7 @@ type DataAccess interface {
 	AddUserAction(userAction c.UserAction) bool
 	AddLinkStyles(linkStyles []c.LinkStyle) bool
 	GetLinkStyles(linkId int) (linkStyles []c.LinkStyle, err error)
+	InitializeDb()
 }
 
 func GetLinks() (linkJson map[string]c.Link) {
@@ -101,11 +104,26 @@ func GetLinkStyles(linkId int) (linkStyles []c.LinkStyle, err error) {
 	return dataAccess.GetLinkStyles(linkId)
 }
 
+type BucketUploader interface {
+	UploadImage(img io.Reader, fileName string) (*string, error)
+	InitializeBucket()
+}
+
+func UploadImage(img io.Reader, fileName string) (*string, error) {
+	return bucketUploader.UploadImage(img, fileName)
+}
+
 func Initialize(dataAccessType string) {
 	if dataAccessType == "local" {
 		dataAccess = &Local{}
+		dataAccess.InitializeDb()
+		bucketUploader = &LocalBucketUploader{}
+		bucketUploader.InitializeBucket()
 	} else {
 		dataAccess = &Db{}
+		dataAccess.InitializeDb()
+		bucketUploader = &RealBucketUploader{}
+		bucketUploader.InitializeBucket()
 		go func() {
 			migrator, err := NewMigrator()
 			if err != nil {

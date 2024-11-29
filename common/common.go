@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -88,45 +87,6 @@ const (
 	Created UserActionStatus = "Created"
 	Updated UserActionStatus = "Updated"
 )
-
-type UserState string
-
-const (
-	Posts    UserState = "posts"
-	Saved    UserState = "saved"
-	Settings UserState = "settings"
-)
-
-type MultipleLinkData struct {
-	*User
-	UserLinkData  []UserLinkData
-	CommenteerUrl string
-	ErrorText     string
-	Path          string
-	UserState     UserState
-}
-
-type ParamData struct {
-	Cmt    string `json:"cmt"`
-	Brd    string `json:"brd"`
-	Bc     string `json:"bc"`
-	Font   string `json:"font"`
-	Bold   string `json:"bold"`
-	Italic string `json:"italic"`
-}
-
-func (pd ParamData) ToJson() (string, error) {
-	rslt, err := json.Marshal(pd)
-	return string(rslt), err
-}
-
-type SingleLinkData struct {
-	*User
-	UserLinkData
-	RedditRequest string
-	CommenteerUrl string
-	Params        string
-}
 
 type LinkStyle struct {
 	LinkStyleId int
