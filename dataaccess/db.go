@@ -342,9 +342,9 @@ func (d Db) DecrementUserUploadCount(userId int) bool {
 }
 
 func (d Db) RefreshUserUploadCount(userId int, newCount int) bool {
-	query := "UPDATE users SET remaining_uploads = ($1), upload_refresh_dt_tm = NOW() + INTERVAL '1 week' where user_id = ($2)"
-	args := []any{newCount, userId}
-	_, err := dbpool.Exec(context.Background(), query, args[0], args[1])
+	query := "UPDATE users SET remaining_uploads = ($1), upload_refresh_dt_tm = NOW() + INTERVAL '1 week' where user_id = ($2) and remaining_uploads < ($3)"
+	args := []any{userId, newCount}
+	_, err := dbpool.Exec(context.Background(), query, args[1], args[0], args[1])
 	if err != nil {
 		log.Printf("error updating user: %v\n", err)
 		return false

@@ -27,9 +27,9 @@
 {{ define "userLoginInfo" }}
 <div class="flex items-center gap-2 mr-4">
     {{if .User}}
-    <a class="flex items-center gap-2" href="/{{.Username}}">
-        <p>{{.Username}}</p>
-        <img class="w-7 bg-white rounded-full" src="{{.IconUrl}}" alt="reddit user icon" loading="lazy" />
+    <a class="flex items-center gap-2" href="/{{.User.Username}}">
+        <p>{{.User.Username}}</p>
+        <img class="w-7 bg-white rounded-full" src="{{.User.IconUrl}}" alt="reddit user icon" loading="lazy" />
     </a>
     <form action="/logout/" method="post">
         <button type="submit"

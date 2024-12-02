@@ -68,12 +68,16 @@ func CheckRemainingUploads(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if user.RemainingUploads > 0 {
+
+		shouldRefresh := time.Now().UTC().After(user.UploadRefreshDtTm)
+
+		if shouldRefresh {
+			refreshed := snoo.RefreshUserUploadCount(user)
+			if !refreshed {
+				log.Printf("user failed to refresh upload count, user id: %d", user.UserId)
+			}
 			next.ServeHTTP(w, r)
-			return
-		}
-		if time.Now().UTC().After(user.UploadRefreshDtTm) {
-			snoo.RefreshUserUploadCount(user)
+		} else if user.RemainingUploads > 0 {
 			next.ServeHTTP(w, r)
 		} else {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)

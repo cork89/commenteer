@@ -296,7 +296,7 @@ func DecrementUserUploadCount(user *common.User) {
 	}
 }
 
-func RefreshUserUploadCount(user *common.User) {
+func RefreshUserUploadCount(user *common.User) bool {
 	var newCount int
 	if user.Subscribed {
 		newCount = 50
@@ -308,6 +308,7 @@ func RefreshUserUploadCount(user *common.User) {
 	if !ok {
 		log.Printf("Problem refreshing user upload count for userId=%d\n", user.UserId)
 	}
+	return ok
 }
 
 func init() {

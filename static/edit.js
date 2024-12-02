@@ -160,7 +160,7 @@ function borderWidth(newState) {
     window.history.pushState(null, "", `?${params.toString()}`)
 }
 
-const borderColors = { 1: ["border-slate-500", "#64748B"], 2: ["border-red-700", "#B91C1C"], 3: ["border-blue-700", "#1D4ED8"], 4: ["border-emerald-700", "#047857"], 5: ["border-yellow-500", "#EAB308"] }
+const borderColors = { 1: ["border-slate-500", "#64748B"], 2: ["border-red-700", "#B91C1C"], 3: ["border-blue-700", "#1D4ED8"], 4: ["border-emerald-700", "#047857"], 5: ["border-yellow-500", "#EAB308"], 6: ["border-stone-950", "#0C0A09"] }
 
 /**
  * @param {number} newState
@@ -179,7 +179,7 @@ function borderColor(newState) {
     const icc = document.getElementById("icc")
     const bc = document.getElementById("border-color")
 
-    icc.classList.remove("border-slate-500", "border-red-700", "border-blue-700", "border-emerald-700", "border-yellow-500")
+    icc.classList.remove("border-slate-500", "border-red-700", "border-blue-700", "border-emerald-700", "border-yellow-500", "border-stone-950")
     icc.classList.add(borderColors[newState][0])
     bc.childNodes[1].setAttribute("fill", borderColors[newState][1])
     params.set("bc", newState)
