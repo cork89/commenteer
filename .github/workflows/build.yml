@@ -14,16 +14,20 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, darwin]
+        arch: [amd64, arm64]
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22.5'
+        go-version: '1.23.4'
 
     - name: Build
-      run: go build -v ./...
+      run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go test -v ./...

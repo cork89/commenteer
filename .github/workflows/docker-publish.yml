@@ -47,6 +47,9 @@ jobs:
         uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da #v3.7.0
         with:
           cosign-release: 'v2.2.4'
+      
+      - name: Install QEMU
+        uses: docker/setup-qemu-action@v2
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -80,6 +83,7 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64,darwin/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -99,3 +103,17 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Upload Mac ARM64 Binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: mac-arm64
+          path: build/commenteer-darwin-arm64
+
+      - name: Upload Linux AMD64 Binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-amd64
+          path: build/commenteer-linux-amd64
+
+
