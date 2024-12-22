@@ -1,7 +1,10 @@
 {{define "head"}}
 <title>Commenteer</title>
+<meta name="page" content="home" />
+<meta name="subpage" content="default" />
 <script src="/static/home.js" async></script>
 <script src="/static/linkActions.js" async></script>
+<script src="/static/infinitescroll.js" async></script>
 {{end}}
 
 {{define "nav"}}
@@ -9,7 +12,7 @@
 {{end}}
 
 {{define "body"}}
-<div class="flex justify-center items-center flex-col pt-20">
+<div id="maincontent" class="flex justify-center items-center flex-col pt-20">
     {{if .User}}
     <div class="mb-4 flex-wrap" style="width: 1024px; max-width: 100%;">
         <!-- <form method="get"> -->

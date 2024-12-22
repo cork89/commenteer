@@ -1,6 +1,5 @@
 // var enc = new TextEncoder()
 // var dec = new TextDecoder()
-
 function validateLink() {
     let url = document.getElementById("link");
 
