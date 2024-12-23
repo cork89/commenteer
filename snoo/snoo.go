@@ -64,7 +64,7 @@ func parsePostData(data map[string]interface{}) (imageUrl string, linkType c.Bas
 			imageUrl = "self.jpg"
 		} else {
 			linkType = c.External
-			imageUrlParts := strings.Split(postData["url_overridden_by_dest"].(string), "-")
+			imageUrlParts := strings.Split(postData["url_overridden_by_dest"].(string), ".")
 			ext := imageUrlParts[len(imageUrlParts)-1]
 			if ext != jpeg && ext != jpg && ext != png {
 				imageUrl = postData["thumbnail"].(string)
