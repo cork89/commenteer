@@ -46,6 +46,7 @@ func main() {
 
 	router.HandleFunc("/", h.HomeHandler)
 	router.HandleFunc("/data/", h.HomeDataHandler)
+	router.HandleFunc("/api/data/", h.HomeDataApiHandler)
 	router.HandleFunc("GET /login/", h.LoginHandler)
 	router.HandleFunc("POST /login/", h.LoginPostHandler)
 	router.HandleFunc("GET /u/{username}/", func(w http.ResponseWriter, r *http.Request) {

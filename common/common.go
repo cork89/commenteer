@@ -20,16 +20,16 @@ const (
 )
 
 type Link struct {
-	ImageUrl       string
-	ProxyUrl       string
-	RedditComments []Comment
-	LinkType       Base
-	CdnUrl         string
-	UserId         int
-	QueryId        string
-	LinkId         int
-	ImageWidth     int
-	ImageHeight    int
+	ImageUrl       string    `json:"imageUrl"`
+	ProxyUrl       string    `json:"proxyUrl"`
+	RedditComments []Comment `json:"redditComments,omitempty"`
+	LinkType       Base      `json:"linkType"`
+	CdnUrl         string    `json:"cdnUrl"`
+	UserId         int       `json:"userId"`
+	QueryId        string    `json:"queryId"`
+	LinkId         int       `json:"id"`
+	ImageWidth     int       `json:"imageWidth"`
+	ImageHeight    int       `json:"imageHeight"`
 }
 
 type UserLinkData struct {
@@ -45,18 +45,18 @@ type Comment struct {
 type UserCookie struct {
 	Username          string    `json:"username"`
 	RefreshExpireDtTm time.Time `json:"refreshExpireDtTm"`
-	AccessToken       string    `json:"accessToken"`
-	IconUrl           string    `json:"icon_url"`
+	AccessToken       string    `json:"accessToken,omitempty"`
+	IconUrl           string    `json:"iconUrl,omitempty"`
 }
 
 type User struct {
 	UserCookie
-	Subscribed        bool
-	SubscriptionDtTm  string
-	RefreshToken      string
-	UserId            int
-	RemainingUploads  int
-	UploadRefreshDtTm time.Time
+	Subscribed        bool      `json:"subscribed"`
+	SubscriptionDtTm  string    `json:"subscriptionDtTm"`
+	RefreshToken      string    `json:"refreshToken,omitempty"`
+	UserId            int       `json:"userId"`
+	RemainingUploads  int       `json:"remainingUploads"`
+	UploadRefreshDtTm time.Time `json:"uploadRefreshDtTm"`
 }
 
 type ActionType string
@@ -74,11 +74,11 @@ const (
 )
 
 type UserAction struct {
-	ActionType ActionType
-	TargetType TargetType
-	UserId     int
-	TargetId   int
-	Active     bool
+	ActionType ActionType `json:"actionType"`
+	TargetType TargetType `json:"targetType"`
+	UserId     int        `json:"userId"`
+	TargetId   int        `json:"targetId"`
+	Active     bool       `json:"active"`
 }
 
 type UserActionStatus string

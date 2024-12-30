@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"log"
 	c "main/common"
 	d "main/dataaccess"
@@ -43,6 +44,34 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
+	var multipleLinkData MultipleLinkData = HomeDataRetriever(w, r)
+
+	template := Templates.Get("homedata")
+	if err := template.ExecuteTemplate(w, "links", multipleLinkData); err != nil {
+		log.Printf("homeMoreDataHandler err: %v", err)
+	}
+}
+
+func HomeDataApiHandler(w http.ResponseWriter, r *http.Request) {
+	var multipleLinkData MultipleLinkData = HomeDataRetriever(w, r)
+	if multipleLinkData.User != nil {
+		multipleLinkData.User.AccessToken = ""
+		multipleLinkData.User.IconUrl = ""
+		multipleLinkData.User.RefreshToken = ""
+	}
+
+	data, err := json.Marshal(multipleLinkData)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+	}
+}
+
+func HomeDataRetriever(w http.ResponseWriter, r *http.Request) MultipleLinkData {
 	var multipleLinkData MultipleLinkData
 	var userLinkData []c.UserLinkData
 	var posts []c.Link
@@ -73,8 +102,5 @@ func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	multipleLinkData.UserLinkData = userLinkData
 	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
-	template := Templates.Get("homedata")
-	if err := template.ExecuteTemplate(w, "links", multipleLinkData); err != nil {
-		log.Printf("homeMoreDataHandler err: %v", err)
-	}
+	return multipleLinkData
 }

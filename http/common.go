@@ -49,12 +49,12 @@ const (
 
 type MultipleLinkData struct {
 	*c.User
-	UserLinkData  []c.UserLinkData
-	CommenteerUrl string
-	ErrorText     string
-	ErrorType     ErrorType
-	Path          string
-	UserState     UserState
+	UserLinkData  []c.UserLinkData `json:"userLinkData"`
+	CommenteerUrl string           `json:"commenteerUrl"`
+	ErrorText     string           `json:"errorText"`
+	ErrorType     ErrorType        `json:"errorType"`
+	Path          string           `json:"path"`
+	UserState     UserState        `json:"userState"`
 }
 
 type SingleLinkData struct {
