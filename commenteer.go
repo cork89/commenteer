@@ -27,14 +27,15 @@ func main() {
 
 	homeTemp := template.New("home").Funcs(template.FuncMap{"LinkWrap": h.LinkWrap})
 	templates.Set("home", template.Must(homeTemp.ParseFiles("static/home.html", "static/base.html", "static/links.html", "static/linkActions.html")))
+
 	homeDataTemp := template.New("homedata").Funcs(template.FuncMap{"LinkWrap": h.LinkWrap})
 	templates.Set("homedata", template.Must(homeDataTemp.ParseFiles("static/links.html", "static/linkActions.html")))
 	templates.Set("edit", template.Must(template.ParseFiles("static/edit.html", "static/base.html")))
+
 	viewTemp := template.New("view").Funcs(template.FuncMap{"LinkWrap": h.LinkWrap})
 	templates.Set("view", template.Must(viewTemp.ParseFiles("static/view.html", "static/base.html", "static/linkActions.html")))
 	templates.Set("login", template.Must(template.ParseFiles("static/login.html", "static/base.html")))
 	templates.Set("faq", template.Must(template.ParseFiles("static/faq.html", "static/base.html")))
-	userTemp := template.New("home").Funcs(template.FuncMap{"LinkWrap": h.LinkWrap})
 
 	templates.Set("user", template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/links.html", "static/linkActions.html")))
 	templates.Set("userSaved", template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/links.html", "static/linkActions.html")))

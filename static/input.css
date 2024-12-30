@@ -87,6 +87,16 @@ body {
     .image-comment-container-rel {
         font-size: 16px;
     }
+
+    .links {
+        max-width: 90%;
+    }
+}
+
+@media (min-width: 601px) {
+    .links {
+        max-width: 80%;
+    }
 }
 
 .image-comment-container img {
@@ -207,6 +217,10 @@ img {
         border-left: 2px solid rgb(253, 164, 175);
         border-bottom: 2px solid rgb(253, 164, 175);
         border-radius: 0 0 0 10px;
+    }
+
+    .links {
+        max-width: 70%;
     }
 }
 
