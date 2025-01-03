@@ -218,15 +218,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contentType := r.Header.Get("Content-Type")
-	contentInfo := strings.Split(contentType, "/")
-	if len(contentInfo) < 2 {
-		log.Println("content-type malformed")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	imageType := contentInfo[1]
-	fileName := fmt.Sprintf("%s.%s", redditRequest.AsString(), imageType)
+	fileName := fmt.Sprintf("%s.webp", redditRequest.AsString())
 
 	if err = json.NewDecoder(r.Body).Decode(&imageInfo); err != nil {
 		log.Printf("failed to unmarshal request body, err=%v\n", err)
@@ -242,14 +234,14 @@ func SaveHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	slog.Info("saveHandler", "ContentType", contentType, "imageType", imageType, "filename", fileName)
+	slog.Info("saveHandler", "imageType", "webp", "filename", fileName)
 	imgDataReader := bytes.NewReader(b64)
 	_, err = d.UploadImage(imgDataReader, fileName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	cdnUrl := fmt.Sprintf("%s/%s.%s", s.CdnBaseUrl, redditRequest.AsString(), imageType)
+	cdnUrl := fmt.Sprintf("%s/%s.%s", s.CdnBaseUrl, redditRequest.AsString(), "webp")
 	go d.UpdateCdnUrl(*redditRequest, cdnUrl, imageInfo.Height, imageInfo.Width)
 
 	w.Header().Set("Cache-Control", "max-age=0")

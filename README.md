@@ -31,6 +31,9 @@ this assumes you have docker installed and running, and your env file exists in 
 * Currently this app is linked directly to an app created on reddit (https://reddit.com/prefs/apps).
   * two apps are currently being used one for prod and one for dev
 
+> [!NOTE]
+> When trying to build on my m1 mac running docker compose did not work out of the box (just arm things), i had to move the env file into the project dir (just macos things) and build the commenteer app separately, then use that version in the docker compose file
+
 if you want to live update the go app during development you can use the live reloading server air (https://github.com/air-verse/air)
 
 to do this you need to stop the commenteer app docker container and from the base directory run the command ```air```
