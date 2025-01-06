@@ -16,23 +16,23 @@ function login() {
     window.location.href = "/login/"
 }
 
+function base64ToBlob(base64, mimeType = "image/png") {
+    const byteCharacters = atob(base64.split(',')[1]);
+
+    const byteArray = new Uint8Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+    }
+    return new Blob([byteArray], { type: mimeType });
+}
+
 async function copyImage(event, commenteerUrl) {
     try {
         const queryId = event.id.substr(0, event.id.indexOf("-copy"))
         const imgDiv = document.getElementById(queryId)
-        const img = imgDiv.src
-
-        // let imgData = sessionStorage.getItem(imgId);
-        // if (!imgBlob) {
-        const imgData = await fetch(`${commenteerUrl}/image/?src=${img}`, {
-            mode: "no-cors",
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-            }
-        }).then(res => res.arrayBuffer());
-        // sessionStorage.setItem(imgId, imgData);
-        // }
-        const imgBlob = new Blob([await imgData], { type: 'image/png' });
+        const canvas = await html2canvas(imgDiv, { allowTaint: false, useCORS: true, height: imgDiv.height, width: imgDiv.width, scale: 2 });
+        const imgData = canvas.toDataURL("image/png");
+        const imgBlob = base64ToBlob(imgData)
 
         navigator.clipboard.write([
             new ClipboardItem({
@@ -44,6 +44,24 @@ async function copyImage(event, commenteerUrl) {
         setTimeout(() => {
             clipboardNote.classList.add("invisible")
         }, 5000)
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
+async function downloadImage(event, commenteerUrl) {
+    try {
+        const queryId = event.id.substr(0, event.id.indexOf("-download"))
+        const imgDiv = document.getElementById(queryId)
+        const canvas = await html2canvas(imgDiv, { allowTaint: false, useCORS: true, height: imgDiv.height, width: imgDiv.width, scale: 2 });
+        let link = document.createElement("a");
+        document.body.appendChild(link);
+        link.href = canvas.toDataURL("image/webp");
+        link.download = `${queryId}.webp`;
+        link.click();
+        document.body.removeChild(link)
+
     } catch (error) {
         console.error(error);
     }

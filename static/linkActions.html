@@ -12,9 +12,9 @@
     </div>
 
     <!-- Like post -->
-
-    <svg xmlns="http://www.w3.org/2000/svg" {{ if .User }} onclick="likePost(this, '{{.CommenteerUrl}}', '{{.UserLinkData.QueryId}}');" {{ else }} onclick="login()"{{end}}
-        viewBox="0 0 24 24" stroke-width="2" {{ if .UserLinkData.UserAction}} {{ if .UserLinkData.Active}}
+    <svg xmlns="http://www.w3.org/2000/svg" {{ if .User }}
+        onclick="likePost(this, '{{.CommenteerUrl}}', '{{.UserLinkData.QueryId}}');" {{ else }} onclick="login()"
+        {{end}} viewBox="0 0 24 24" stroke-width="2" {{ if .UserLinkData.UserAction}} {{ if .UserLinkData.Active}}
         fill="#FB7185" stroke="#FB7185" {{ else }} fill="none" stroke="#57534E" {{end}} {{else}} fill="none"
         stroke="#57534E" {{end}} class="size-8 dlc-svg">
         <path stroke-linecap="round" stroke-linejoin="round"
@@ -22,7 +22,7 @@
     </svg>
 
     <!-- Download image -->
-    <a href="{{.CommenteerUrl}}/image/?src={{.UserLinkData.CdnUrl}}" download="{{.UserLinkData.QueryId}}">
+    <div id="{{.UserLinkData.QueryId}}-download" onclick="downloadImage(this, '{{.CommenteerUrl}}');">
         <svg class="size-8 dlc-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <title>Download {{.UserLinkData.QueryId}} image</title>
             <path d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7" fill="none" stroke="#57534E" stroke-linecap="round"
@@ -32,6 +32,6 @@
             <line x1="12" y1="2.7" x2="12" y2="14.2" fill="none" stroke="#57534E" stroke-linecap="round"
                 stroke-linejoin="round" stroke-width="2" />
         </svg>
-    </a>
+    </div>
 </div>
 {{end}}
