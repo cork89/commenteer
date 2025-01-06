@@ -30,7 +30,7 @@ async function copyImage(event, commenteerUrl) {
     try {
         const queryId = event.id.substr(0, event.id.indexOf("-copy"))
         const imgDiv = document.getElementById(queryId)
-        const canvas = await html2canvas(imgDiv, { allowTaint: false, useCORS: true, height: imgDiv.height, width: imgDiv.width, scale: 2 });
+        const canvas = await html2canvas(imgDiv, { allowTaint: true, useCORS: true, height: imgDiv.height, width: imgDiv.width, scale: 2 });
         const imgData = canvas.toDataURL("image/png");
         const imgBlob = base64ToBlob(imgData)
 
@@ -54,7 +54,7 @@ async function downloadImage(event, commenteerUrl) {
     try {
         const queryId = event.id.substr(0, event.id.indexOf("-download"))
         const imgDiv = document.getElementById(queryId)
-        const canvas = await html2canvas(imgDiv, { allowTaint: false, useCORS: true, height: imgDiv.height, width: imgDiv.width, scale: 2 });
+        const canvas = await html2canvas(imgDiv, { allowTaint: true, useCORS: true, height: imgDiv.height, width: imgDiv.width, scale: 2 });
         let link = document.createElement("a");
         document.body.appendChild(link);
         link.href = canvas.toDataURL("image/webp");
