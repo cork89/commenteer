@@ -1,6 +1,8 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	c "main/common"
 	d "main/dataaccess"
@@ -56,17 +58,35 @@ func GetUserSettings(user *c.User, userLoggedIn bool, username string) (multiple
 	}
 	multipleLinkData.UserState = Settings
 	return multipleLinkData, redirect
-
 }
 
 func UserHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user *c.User, userLoggedIn bool, username string) (multipleLinkData MultipleLinkData, redirect bool)) {
-	var multipleLinkData MultipleLinkData
+	multipleLinkData, redirect, err := UserDataHandler(w, r, linkRetriever)
+
+	if err != nil {
+		return
+	}
+
+	if redirect {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if err := Templates.Get("user").ExecuteTemplate(w, "base", multipleLinkData); err != nil {
+		log.Printf("userHandler err: %v", err)
+	}
+}
+
+func UserDataHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user *c.User, userLoggedIn bool, username string) (multipleLinkData MultipleLinkData, redirect bool)) (MultipleLinkData, bool, error) {
 	username, err := ExtractUsername(r)
+
+	var multipleLinkData MultipleLinkData
+	var redirect bool
 
 	if err != nil {
 		log.Printf("error extracting username, err=%v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return multipleLinkData, redirect, err
 	}
 
 	ctx := r.Context()
@@ -74,17 +94,29 @@ func UserHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user
 	if !ok {
 		user, ok = s.GetUserCookie(r)
 	}
+	multipleLinkData, redirect = linkRetriever(user, ok, username)
+	multipleLinkData.Path = username
+	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+	return multipleLinkData, redirect, nil
+}
 
-	multipleLinkData, redirect := linkRetriever(user, ok, username)
-	if redirect {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+func UserDataApiHandler(w http.ResponseWriter, r *http.Request, linkRetriever func(user *c.User, userLoggedIn bool, username string) (multipleLinkData MultipleLinkData, redirect bool)) {
+	multipleLinkData, redirect, err := UserDataHandler(w, r, linkRetriever)
+	fmt.Println(multipleLinkData, redirect, err)
+	if err != nil || redirect {
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	multipleLinkData.Path = username
-	multipleLinkData.CommenteerUrl = os.Getenv("COMMENTEER_URL")
+	data, err := json.Marshal(multipleLinkData)
 
-	if err := Templates.Get("user").ExecuteTemplate(w, "base", multipleLinkData); err != nil {
-		log.Printf("userHandler err: %v", err)
+	fmt.Println(string(data))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
 	}
 }

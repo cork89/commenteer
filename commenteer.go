@@ -37,6 +37,7 @@ func main() {
 	templates.Set("login", template.Must(template.ParseFiles("static/login.html", "static/base.html")))
 	templates.Set("faq", template.Must(template.ParseFiles("static/faq.html", "static/base.html")))
 
+	userTemp := template.New("user").Funcs(template.FuncMap{"LinkWrap": h.LinkWrap})
 	templates.Set("user", template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/links.html", "static/linkActions.html")))
 	templates.Set("userSaved", template.Must(userTemp.ParseFiles("static/user.html", "static/base.html", "static/links.html", "static/linkActions.html")))
 
@@ -57,6 +58,10 @@ func main() {
 		log.Println(r.URL.Path)
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	})
+	router.HandleFunc("/api/u/{username}/", func(w http.ResponseWriter, r *http.Request) {
+		h.UserDataApiHandler(w, r, h.GetUserLinks)
+	})
+
 	loggedInRouter := http.NewServeMux()
 	loggedInRouter.HandleFunc("GET /r/{id}/submit/", h.EditHandler)
 	loggedInRouter.HandleFunc("POST /r/{id}/submit/", h.SaveHandler)
@@ -65,6 +70,9 @@ func main() {
 	})
 	loggedInRouter.HandleFunc("POST /u/{username}/saved/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+	})
+	loggedInRouter.HandleFunc("/api/u/{username}/saved/", func(w http.ResponseWriter, r *http.Request) {
+		h.UserDataApiHandler(w, r, h.GetUserSavedLinks)
 	})
 	loggedInRouter.HandleFunc("GET /u/{username}/settings/", func(w http.ResponseWriter, r *http.Request) {
 		h.UserHandler(w, r, h.GetUserSettings)
@@ -98,6 +106,7 @@ func main() {
 	router.Handle("POST /u/{username}/saved/", strict(loggedInRouter))
 	router.Handle("GET /u/{username}/settings/", strict(loggedInRouter))
 	router.Handle("POST /u/{username}/settings/", strict(loggedInRouter))
+	router.Handle("/api/u/{username}/saved/", strict(loggedInRouter))
 
 	server := http.Server{
 		Addr:    ":8090",

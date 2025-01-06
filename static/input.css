@@ -89,13 +89,15 @@ body {
     }
 
     .links {
-        max-width: 90%;
+        width: 90%;
     }
 }
 
 @media (min-width: 601px) {
     .links {
-        max-width: 80%;
+        /* max-width: 80%;
+        max-height: 100%; */
+        width: 70%;
     }
 }
 
@@ -220,8 +222,18 @@ img {
     }
 
     .links {
-        max-width: 70%;
+        width: 50%;
     }
+}
+
+@media (min-width: 1700px) {
+    .links {
+        width: 45%;
+    }
+}
+
+.links {
+    margin: 0 auto;
 }
 
 ul {
